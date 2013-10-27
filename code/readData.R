@@ -39,7 +39,19 @@ df2$frisked <- as.numeric(with(df2, FRISKED=='Y'))
 
 df = df2
 
-save(df, file = 'data/cleanedData.Rdata')
 
-# loading the data example...
-load(file = 'data/cleanedData.Rdata')
+# Drop out those who are older than 95 and younger than 5
+df <- df[df$AGE<=95, ]
+df <- df[df$AGE>=5, ]
+
+df$ageBin <-  with(df, cut(AGE, breaks=c(4, 18, 21, 24, 30, 41, 60, 95)))
+df$race[df$RACE=='W'] <- 'White'
+df$race[df$RACE=='B'] <- 'Black'
+df$race[df$RACE=='P'|df$RACE=='Q'] <- 'Hispanic'
+df$race[is.na(df$race)] <- 'Other'
+
+df$heightInches <- as.numeric(df$HT_FEET) * 12 + as.numeric(df$HT_IN)
+df$weight <- as.numeric(df$WEIGHT)
+
+
+save(df, file = 'data/cleanedData.Rdata')
