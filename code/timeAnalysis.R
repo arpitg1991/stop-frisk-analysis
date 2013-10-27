@@ -7,56 +7,54 @@ load('data/cleanedData.Rdata')
 
 require(plyr)
 require(ggplot2)
-
+require(ggthemes)
 # Distributions of physical features by race
-
-test <- ddply(.data = df, .variables = c('weekStop', 'hourStop', 'CMDESC'),.fun = NROW)
 
 hourSet<-ddply(.data = df, .variables = c('hourStop', 'CMDESC'),
                summarize,
                numStops = NROW(CMDESC)
                )
 
-head(hourSet[ order(-hourSet[,3]),],30)
 
-ggplot(hourSet, aes(x = as.numeric(hourStop), y= numStops, group = CMDESC)) + geom_point() + xlab('Hour of the day') + ylab('Number of incidents')  + geom_line(aes(group = CMDESC))
+ggplot(hourSet, aes(x = as.numeric(hourStop), y= numStops, group = CMDESC)) +
+  geom_point() + xlab('Hour of the day') + ylab('Number of incidents')  +
+  geom_line(aes(group = CMDESC)) +
+  theme_economist()
 
 
+head(hourSet[ order(-hourSet[,3]),],20)
 
-dtest <- ddply(.data = df, 
-               .variables = c('dayStop'),
-               summarize, 
-               avgArrest = mean(arrestMade),
-               numStops = NROW(CMDESC),
-               avgFrisk = mean(frisked)
+df$CMDESC2 <- 'Other'
+df$CMDESC2[is.na(df$CMDESC)] <- 'None Provided'
+df$CMDESC2[df$CMDESC == 'CREATING A HAZARD'] <- 'Creating a Hazard'
+df$CMDESC2[df$CMDESC == 'RECKLESS ENDANGERMENT PROPERTY'] <- 'Reckless Endangerment Property'
+
+hourSet<-ddply(.data = df, .variables = c('hourStop', 'CMDESC2'),
+               summarize,
+               numStops = NROW(CMDESC)
 )
 
-ggplot(dtest, aes(x = avgFrisk, y = avgArrest)) + geom_point(aes(color = dayStop, size = numStops)) + geom_line()
+ggplot(hourSet, aes(x = hourStop), y= numStops)) +
+  geom_bar(stat=identity, aes(group = ))
+
+img = qplot(hourStop, data = df, geom = 'bar', fill = race, binwidth = 1) +
+  facet_wrap(~CMDESC2) +
+  theme_economist() +
+  xlim(0,23) +
+  xlab('Hour in the day') +
+  ylab('Number of stops')
+
+ggsave(file="hourStop.png", plot=img, width=6, height=3, units = 'in')
+
+img = qplot(weekStop, data = df, geom = 'bar', fill = race, binwidth = 1) +
+  facet_wrap(~CMDESC2) +
+  theme_economist() + 
+  xlim(1,52) +
+  xlab('Week in the year')+
+  ylab('Number of stops')
 
 
-dtest <- ddply(.data = df, 
-               .variables = c('wkdayStop','CMDESC'),
-               summarize, 
-               avgArrest = mean(arrestMade),
-               numStops = NROW(CMDESC),
-               avgFrisk = mean(frisked)
-)
-
-ggplot(dtest, aes(x = avgFrisk, y = avgArrest)) + geom_point(aes(color = CMDESC, size = numStops)) 
-
-dtest <- ddply(.data = df2, 
-               .variables = c('PCT'),
-               summarize, 
-               avgArrest = mean(arrestMade),
-               numStops = NROW(CMDESC),
-               avgFrisk = mean(frisked)
-)
-ggplot(dtest, aes(x = avgFrisk, y = avgArrest)) + geom_point(aes(color = as.factor(PCT), size = numStops))
+ggsave(file="weekStop.png", plot=img, width=6, height=3, units = 'in')
 
 
-ggplot(dtest, aes(x = as.numeric(hourStop), y= V1)) + geom_point(aes(color = factor(CMDESC))) + xlab('Hour of the day') + ylab('Number of incidents') 
 
-
-ggplot(test, aes(x = as.numeric(hourStop), y= V1)) + geom_point(aes(color = factor(CMDESC))) + xlab('Hour of the day') + ylab('Number of incidents') 
-
-ggplot(test, aes(x = as.numeric(weekStop), y= V1)) + geom_point(aes(color = factor(CMDESC))) + xlab('Week of the year') + ylab('Number of incidents')

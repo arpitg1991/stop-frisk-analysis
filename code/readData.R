@@ -7,7 +7,7 @@
 setwd(dir = '~/stop-frisk-analysis/')
 
 require(foreign)
-df <- as.data.frame(read.spss('data/raw/2012.por'))
+df <- as.data.frame(read.spss('data/raw/2011.por'))
 
 desc <- read.csv('data/detailcm.csv')
 
@@ -23,7 +23,7 @@ df2$t <- str_replace_all(as.character(df2$TIMESTOP), pattern = ' ', replace = ''
 
 df2$d[nchar(df2$d)==7] <- paste('0',df2$d[nchar(df2$d)==7], sep = '')
 df2$t[nchar(df2$t)==3] <- paste('0',df2$t[nchar(df2$t)==3], sep = '')
-df2$t[nchar(df2$t)==2] <- paste('00',df2$t[nchar(df2$t)==3], sep = '')
+df2$t[nchar(df2$t)==2] <- paste('00',df2$t[nchar(df2$t)==2], sep = '')
 
 df2$hourStop <- as.numeric(substr(df2$t, 1,2))
 df2$datestop <- as.POSIXct(as.Date(df2$d, '%m%d%Y'))
