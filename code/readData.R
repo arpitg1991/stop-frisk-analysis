@@ -25,11 +25,11 @@ df2$d[nchar(df2$d)==7] <- paste('0',df2$d[nchar(df2$d)==7], sep = '')
 df2$t[nchar(df2$t)==3] <- paste('0',df2$t[nchar(df2$t)==3], sep = '')
 df2$t[nchar(df2$t)==2] <- paste('00',df2$t[nchar(df2$t)==3], sep = '')
 
-df2$hourStop <- substr(df2$t, 1,2)
+df2$hourStop <- as.numeric(substr(df2$t, 1,2))
 df2$datestop <- as.POSIXct(as.Date(df2$d, '%m%d%Y'))
 
 require(lubridate)
-df2$monthStop <- month(df2$datestop)
+df2$monthStop <- as.numeric(month(df2$datestop))
 df2$weekStop <- as.numeric(week(df2$datestop))
 df2$wkdayStop <- weekdays(df2$datestop)
 df2$dayStop <- as.numeric(day(df2$datestop))
