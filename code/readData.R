@@ -37,7 +37,7 @@ df2$dayStop <- as.numeric(day(df2$datestop))
 df2$arrestMade <- as.numeric(with(df2, ARSTMADE=='Y'))
 df2$frisked <- as.numeric(with(df2, FRISKED=='Y'))
 
-df <- df2
+df = df2
 
 save(df, file = 'data/cleanedData.Rdata')
 
