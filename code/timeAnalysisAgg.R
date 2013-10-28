@@ -39,3 +39,11 @@ img =
 
 ggsave(file="dayStop.png", plot=img, width=6, height=3, units = 'in')
 
+
+
+dtest <- ddply(.data = df, 
+               .variables = c('race','weekStop'),
+               summarize, 
+               numStops = NROW(CMDESC)
+)
+ggplot(dtest, aes(x = weekStop, y = numStops, group = race)) + geom_line(aes(color = race))
