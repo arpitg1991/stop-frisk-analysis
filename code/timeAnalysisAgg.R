@@ -40,6 +40,34 @@ img =
 ggsave(file="dayStop.png", plot=img, width=6, height=3, units = 'in')
 
 
+weekSet<-ddply(.data = df, .variables = c('weekStop', 'CMDESC2'),
+               summarize,
+               numStops = NROW(CMDESC)
+)
+
+
+img = 
+  ggplot(weekSet, aes(x = as.numeric(weekStop), y= numStops, group = CMDESC2)) +
+  geom_point() + xlab('Week in the year') + ylab('Number of stops')  +
+  geom_line(aes(group = CMDESC2, color = CMDESC2)) +
+  theme_economist() + theme(legend.position = 'right') 
+ggsave(file="week_desc.png", plot=img, width=6, height=3, units = 'in')
+
+
+hourSet<-ddply(.data = df, .variables = c('hourStop', 'CMDESC2'),
+               summarize,
+               numStops = NROW(CMDESC)
+)
+
+img = ggplot(hourSet, aes(x = as.numeric(hourStop), y= numStops, group = CMDESC2)) +
+  geom_point() + xlab('Hour of the day') + ylab('Number of stops')  +
+  geom_line(aes(group = CMDESC2, color = CMDESC2)) +
+  theme_economist() + theme(legend.position = 'right') 
+
+ggsave(file="hour_desc.png", plot=img, width=6, height=3, units = 'in')
+
+
+
 
 dtest <- ddply(.data = df, 
                .variables = c('race','weekStop'),
