@@ -7,7 +7,7 @@ require(ggthemes)
 img = 
   ggplot(df, aes(AGE)) + 
   geom_histogram(color = 'white', binwidth = 10) + 
-  facet_wrap(~race) +
+  facet_wrap(~RACE) +
   theme_economist() +
   xlab('Age') +
   ylab('Number of stops')
@@ -16,7 +16,7 @@ ggsave(file="ageHist.png", plot=img, width=6, height=3, units = 'in')
 
 img = ggplot(df, aes(heightInches)) + 
   geom_histogram(color = 'white', binwidth = 2) + 
-  facet_wrap(~race) +
+  facet_wrap(~RACE) +
   theme_economist() +
   xlab('Height in inches') +
   ylab('Number of stops')
