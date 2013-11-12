@@ -48,15 +48,38 @@ ggplot(weekStat, aes(x = weekStop, y =numStops, group = interaction(monthStop, f
 
 load('data/cleanedData.Rdata')
 
+df$Precinct <- as.integer(df$PCT)
+
+
+
 sumStat <- ddply(.data = df, .variables = c('datestop','PCT'),
                  summarize,
                  numStops = NROW(weekStop)
 )
 
-total <- ddply(.data = df, .variables = c('PCT'),
-               summarize,
-               numStops = NROW(PCT)
+ggplot(sumStat, aes(x = datestop, y =numStops, group = PCT)) +
+  geom_point() + geom_line(aes(color = factor(PCT)))
+
+hourStat <- ddply(.data = df, .variables = c('hourStop', 'Precinct'),
+                  summarize,
+                  numStops = NROW(Precinct)
 )
+ggplot(hourStat, aes(x = hourStop, y =numStops, group = Precinct)) +
+  geom_point() + geom_line(aes(color = Precinct))
+
+
+sumStat <- ddply(.data = df, .variables = c('datestop'),
+                 summarize,
+                 numStops = NROW(weekStop)
+)
+
+ggplot(weekStat, aes(x = weekStop, y =numStops, group = interaction(monthStop, factor(yr)))) +
+  geom_point() + geom_line(aes(color = factor(yr)))
+
+
+
+
+
 
 df$XCOORD <- as.integer(df$XCOORD)
 df$YCOORD <- as.integer(df$YCOORD)
@@ -92,7 +115,17 @@ ggplot(weekInMonth[weekInMonth$PCT == 52,], aes(x = weekStop, y =numStops, group
 total <- total[order(-total[,2], total[1]),]
 
 require(lubridate)
+sumStat <- ddply(.data = df, .variables = c('datestop','PCT'),
+                 summarize,
+                 numStops = NROW(weekStop)
+)
+
 sumStat$date <- as.Date(sumStat$datestop)
+
+aggStat <- ddply(.data = df, .variables = c('datestop'),
+                 summarize,
+                 numStops = NROW(weekStop)
+)
 
 require(reshape2)
 sumStat2 <- sumStat[, -1]
@@ -105,7 +138,12 @@ sumStat3 <- dcast(sumStat2, date ~ Precinct, value.var = 'numStops',)
 sumStat3[is.na(sumStat3)] <- 0
 
 
+# by precinct
+test <- ts(sumStat3$pct_25, start = min(sumStat$date), frequency=30,)
+test2 <- decompose(test)
+plot(test2)
 
-test <- ts(sumStat3$pct_75, start = min(sumStat$date), frequency=30,)
+# entire series
+test <- ts(aggStat$numStops, start = min(sumStat$date), frequency=28,)
 test2 <- decompose(test)
 plot(test2)

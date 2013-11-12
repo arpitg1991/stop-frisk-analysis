@@ -59,6 +59,7 @@ hourSet<-ddply(.data = df, .variables = c('hourStop', 'CMDESC2'),
                numStops = NROW(CMDESC)
 )
 
+
 img = ggplot(hourSet, aes(x = as.numeric(hourStop), y= numStops, group = CMDESC2)) +
   geom_point() + xlab('Hour of the day') + ylab('Number of stops')  +
   geom_line(aes(group = CMDESC2, color = CMDESC2)) +
