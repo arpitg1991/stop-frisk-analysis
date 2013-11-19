@@ -3,8 +3,8 @@
 
 <style>
 #boroughs {
-  stroke: grey;
-	stroke-width: 2px;
+  stroke: black;
+	stroke-width: 1px;
 	fill: steelblue;
 }
 </style>
@@ -15,20 +15,20 @@
 
 <script>
 
-var width = 960,
-   height = 500;
+var width = 900,
+   height = 800;
 
 var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height);
 
-  d3.json("data/nybb.geojson", function(error, nyb) {
+  d3.json("data/nypp.geojson", function(error, nyb) {
 
   	console.log(nyb)
 
     var projection = d3.geo.mercator()
   					.center([-73.94, 40.70])
-  					.scale(50000)
+  					.scale(65000)
   					.translate([(width) / 2, (height)/2]);
 
 	var path = d3.geo.path()
@@ -45,7 +45,7 @@ var svg = d3.select("body").append("svg")
 		.attr("d", path);
 
 	});
-
+ 
 </script>
 </body>
 </html>
