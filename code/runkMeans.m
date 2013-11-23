@@ -1,24 +1,33 @@
-data = csvread('../data/kmeans/clusterCountFoodStamps.csv');
+data1 = csvread('../data/kmeans/clusterCountFoodStamps.csv');
+%data2 = csvread('../data/kmeans/clusterIdCountFoodStamps.csv');
+%data3 = csvread('../data/kmeans/clusterIdCountIncome.csv');
+data4 = csvread('../data/kmeans/clusterCountIncome.csv');
+
 %%
-[idx4,c4,sumd4] = kmeans(data,4,'MaxIter',1000);
-[idx5,c5,sumd5] = kmeans(data,5);
-[idx10,c10,sumd10] = kmeans(data,10);
-[idx2,c2,sumd2] = kmeans(data,2);
+[idx4,c4,sumd4] = kmeans(data1,4,'MaxIter',1000,'start','cluster','Replicates',10);
+[idx3,c3,sumd3] = kmeans(data1,3,'MaxIter',1000,'start','cluster','Replicates',10);
+[idx2,c2,sumd2] = kmeans(data1,2,'MaxIter',1000,'start','cluster','Replicates',10);
 %%
-[cidx4,cc4,csumd4] = kmeans(data,4,'distance','hamming');
-[cidx5,cc5,csumd5] = kmeans(data,5,'distance','hamming');
-[cidx10,cc10,csumd10] = kmeans(data,10,'distance','hamming');
-[cidx2,cc2,csumd2] = kmeans(data,2,'distance','hamming');
+csvwrite('Income4.csv',idx4 ) ;
 %%
-idx = [idx4 idx5 idx10 idx2 cidx4 cidx5 cidx10 cidx2];
-%idx = [cidx4 cidx5 cidx10 cidx2];
-k = [4 5 10 2 4 5 10 2];
-feat = zeros(sum(k),25);
-for i = 1:length(k)
-    for j = 1:k(i)
-        feat(sum(k(1:i-1)) + j,1:25) = sum(data(idx(:,i) == j,1:25) ) ; 
-    end
+
+[iidx4,ic4,isumd4] = kmeans(data4,4,'MaxIter',1000,'start','cluster','Replicates',10);
+[iidx3,ic3,isumd3] = kmeans(data4,3,'MaxIter',1000,'start','cluster','Replicates',10);
+[iidx2,ic2,isumd2] = kmeans(data4,2,'MaxIter',1000,'start','cluster','Replicates',10);
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%frisk with almost everything in 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+data = csvread('../data/friskCounts.csv');
+dataInd = data(:,1);
+dataK = data(:,2:size(data,2)) ; 
+%%
+for k = 1: size(dataK,2) 
+    dataK(:,k) = dataK(:,k) / max(dataK(:,k)) ; 
 end
-csvwrite('featuresKMeans.csv',feat)
-%%
-csvwrite('kMeans.csv',idx);
+[idx4,c4,sumd4] = kmeans(dataK,4,'MaxIter',1000,'start','cluster','Replicates',10);
+[idx3,c3,sumd3] = kmeans(dataK,3,'MaxIter',1000,'start','cluster','Replicates',10);
+[idx2,c2,sumd2] = kmeans(dataK,2,'MaxIter',1000,'start','cluster','Replicates',10);
+
+
+
