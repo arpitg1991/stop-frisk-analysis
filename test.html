@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font: 10px sans-serif;
+  background-color:darkgrey;
+}
+        
+</style>
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script type="text/javascript" src="http://d3js.org/topojson.v0.min.js"></script>
+
+<script>
+var screenwidth = 900,
+   screenheight = 800;       
+
+var color_domain = [0, 0.1, 0.33, 0.4, 1]
+var color = d3.scale.threshold()
+  .domain(color_domain)
+  .range(["#adfcad", "#ffcb40", "#ffba00", "#ff7d73", "#ff4e40", "#ff1300"]);    
+    
+    
+    
+var margin = {top: 40, right: 20, bottom: 30, left: 40},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+var x = d3.scale.ordinal()
+    .rangeRoundBands([0, width], .1);
+
+var y = d3.scale.linear()
+    .range([height, 0]);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", screenwidth + margin.left + margin.right)
+    .attr("height", screenheight + margin.top + margin.bottom)
+   
+
+var projection = d3.geo.mercator()
+    .center([-73.94, 40.70])
+    .scale(65000)
+    .translate([(screenwidth) / 2, (screenheight)/2]);
+
+var path = d3.geo.path()
+        .projection(projection);    
+    
+queue()
+    .defer(d3.json, "data/nybb.json")
+    .defer(d3.csv, "data.csv")
+    .await(ready);
+    
+var nyb;
+
+function prepareMap() {
+    svg.append("g")
+        .attr("class", "boroughs")
+    .selectAll("path")
+        .data(topojson.object(nyb, nyb.objects.nybb).geometries)
+    .enter().append("path")
+  /*  .style("fill", function(d){
+        if (rateById[d.id]<0.4){
+            result = 'green'}
+        else {
+            result = 'blue'}
+        return result;})*/
+    
+    .style('fill', function(d){
+        return colorById[d.id];})
+    .attr('d', path);
+}
+        
+    var rateById = {};
+    var nameById = {};
+    var colorById = {};
+
+function ready(error, Map, Data){
+// process the data
+    
+    
+    Data.forEach(function(d) {
+        rateById[d.BoroCode] = +d.rate;
+        nameById[d.BoroCode] = +d.BoroCode;
+        colorById[d.BoroCode] = d.color;
+    });
+        
+    nyb = Map;
+        
+   prepareMap();
+    
+}
+colorById[1]
+ 
+</script>
