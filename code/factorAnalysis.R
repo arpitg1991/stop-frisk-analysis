@@ -42,9 +42,22 @@ frisk3 <- as.data.frame(cbind(frisk[,369], frisk[,406],frisk[,407],frisk[,408],f
                               frisk[,410],frisk[,411],frisk[,413],frisk[,437],frisk[,439],
                               frisk[,415],frisk[,419],frisk[,423],frisk[,427],frisk[,431],
                               frisk[,356],frisk[,362],frisk[,366],frisk[,321],frisk[,319],
-                              frisk[,317],frisk[,265],frisk[,255],frisk[,257],frisk[,258] ))
+                              frisk[,317],frisk[,265],frisk[,255],frisk[,257],frisk[,259] )
+frisk3[is.na(frisk3)] <- 0
 scaledFrisk3 <- as.data.frame(scale(frisk3))
-fa.parallel(scaledFrisk3)
+fa.parallel(frisk3)
 corMat1 <- cor (frisk3)
-solution <- fa(r = frisk3, nfactors = 8, rotate = "varimax", fm = "wls",max.iter = 500)
-names(frisk3)
+solution <- fa(r = corMat1, nfactors = 6, rotate = "varimax", fm = "wls",max.iter = 500)
+##############################################################################################
+require(sqldf)
+frisk4 <- sqldf('select distinct BOROCT2010, count(*) as count, ACS_p_home_lang_english, ACS_p_home_lang_spanish, ACS_p_home_lang_other, ACS_p_no_income_indv from ')
+frisk4 <- as.data.frame(cbind(frisk[,132],frisk[,369], frisk[,406],frisk[,407],frisk[,408],frisk[,409],
+                                                      frisk[,410],frisk[,411],frisk[,413],frisk[,437],frisk[,439],
+                                                      frisk[,415],frisk[,419],frisk[,423],frisk[,427],frisk[,431],
+                                                      frisk[,356],frisk[,362],frisk[,366],frisk[,321],frisk[,319],
+                                                      frisk[,317],frisk[,265],frisk[,255],frisk[,257],frisk[,259] ))
+colnames(frisk4) <- colnames(frisk[,c(132,369,406,407,408,409,410,411,413,437,439,415,419,423,427,431,356,362,366,321,319,317,265,255,257,259)])
+friskCounts <- sqldf('select *,count(*) from frisk4 group by BoroCT2010')     
+friskCounts <- friskCounts[c(2:nrow(friskCounts)),]
+friskCounts[is.na(friskCounts)] <- 0
+                        
