@@ -11,6 +11,19 @@ path {
         stroke: black;
         stroke-width: 1px;
     }
+    
+div.tooltip {   
+  position: absolute;           
+  text-align: center;           
+  width: 150px;                  
+  height: 25px;                 
+  padding: 2px;             
+  font-size: 10px;     
+  background: #FFFFE0;
+  border: 1px;      
+  border-radius: 8px;           
+  pointer-events: none;         
+}     
         
 </style>
 <body>
@@ -44,10 +57,15 @@ var y = d3.scale.linear()
 var svg = d3.select("body").append("svg")
     .attr("width", screenwidth + margin.left + margin.right)
     .attr("height", screenheight + margin.top + margin.bottom)
+
+
+var div = d3.select("body").append("div")   
+    .attr("class", "tooltip")               
+    .style("opacity", 0);
    
 var projection = d3.geo.mercator()
     .center([-73.94, 40.70])
-    .scale(65000)
+    .scale(69000)
     .translate([(screenwidth) / 2, (screenheight)/2]);
 
 var path = d3.geo.path()
@@ -66,25 +84,30 @@ function prepareMap() {
     .selectAll("path")
         .data(topojson.object(nyp, nyp.objects.nypp).geometries)
     .enter().append("path")
-// How do we color the polygons?    
+    .attr('d', path)
+    
+    // How do we color the polygons?
     .style('fill', function(d) {
         return color(rateById[d.id]);}).style('opacity', 0.8)
 
-    // We could do it using if criteria
-/*      .style("fill", function(d){
-        if (rateById[d.id]<2000){
-            result = 'green'}
-        else {
-            result = 'blue'}
-        return result;})
-        */
     
+  //Adding mouseevents
+  .on("mouseover", function(d) {
+    d3.select(this).transition().duration(300).style("opacity", 1);
+    div.transition().duration(300)
+    .style("opacity", 1)
+    div.text("Precinct " + nameById[d.id] + " : " + rateById[d.id] + " Crimes ")
+    .style("left", (d3.event.pageX) + "px")
+    .style("top", (d3.event.pageY -30) + "px");
+  })
     
-    // Or by predefined colors specified in the datafile
-  //  .style('fill', function(d){
-//        return colorById[d.id];})
-
-    .attr('d', path);
+  .on("mouseout", function() {
+    d3.select(this)
+    .transition().duration(300)
+    .style("opacity", 0.8);
+    div.transition().duration(300)
+    .style("opacity", 0);
+  })
 }
         
 // Initialize arrays to hold the data

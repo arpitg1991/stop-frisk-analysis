@@ -18,13 +18,14 @@ body {
 var screenwidth = 900,
    screenheight = 800;       
 
+// To be used for quantizing data to colors    
 var color_domain = [0, 0.1, 0.33, 0.4, 1]
 var color = d3.scale.threshold()
   .domain(color_domain)
   .range(["#adfcad", "#ffcb40", "#ffba00", "#ff7d73", "#ff4e40", "#ff1300"]);    
     
     
-    
+ 
 var margin = {top: 40, right: 20, bottom: 30, left: 40},
     width = 960 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
@@ -39,7 +40,6 @@ var svg = d3.select("body").append("svg")
     .attr("width", screenwidth + margin.left + margin.right)
     .attr("height", screenheight + margin.top + margin.bottom)
    
-
 var projection = d3.geo.mercator()
     .center([-73.94, 40.70])
     .scale(65000)
@@ -53,45 +53,44 @@ queue()
     .defer(d3.csv, "data.csv")
     .await(ready);
     
-var nyb;
-
 function prepareMap() {
     svg.append("g")
         .attr("class", "boroughs")
     .selectAll("path")
         .data(topojson.object(nyb, nyb.objects.nybb).geometries)
     .enter().append("path")
-  /*  .style("fill", function(d){
+// How do we color the polygons?    
+    // We could do it using if criteria
+    /*  .style("fill", function(d){
         if (rateById[d.id]<0.4){
             result = 'green'}
         else {
             result = 'blue'}
         return result;})*/
     
+    // Or by predefined colors specified in the datafile
     .style('fill', function(d){
         return colorById[d.id];})
+
     .attr('d', path);
 }
         
-    var rateById = {};
-    var nameById = {};
-    var colorById = {};
+// Initialize arrays to hold the data
+var rateById = {};
+var nameById = {};
+var colorById = {};
 
 function ready(error, Map, Data){
-// process the data
-    
-    
+// process the data    
+    // Store data from csv into arrays, whose indices match the map ids
     Data.forEach(function(d) {
         rateById[d.BoroCode] = +d.rate;
         nameById[d.BoroCode] = +d.BoroCode;
         colorById[d.BoroCode] = d.color;
     });
-        
     nyb = Map;
-        
-   prepareMap();
-    
+// Generate the map
+   prepareMap();    
 }
-colorById[1]
  
 </script>
