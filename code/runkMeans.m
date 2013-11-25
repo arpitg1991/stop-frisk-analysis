@@ -88,6 +88,46 @@ idx2 = [data(:,1) idx2];
 dlmwrite('../data/Factor-NoRacek-4.csv',idx4,'delimiter',',','precision',7);
 dlmwrite('../data/Factor-NoRacek-3.csv',idx3,'delimiter',',','precision',7);
 dlmwrite('../data/Factor-NoRacek-2.csv',idx2,'delimiter',',','precision',7);
+%%
+%just the census tract
+data1 = csvread('../data/censusTract.csv');
+dataK = data1(:,2:size(data1,2)) ; 
+for k = 1: size(dataK,2) 
+    dataK(:,k) = dataK(:,k) / max(dataK(:,k)) ; 
+end
+[idx4,c4,sumd4] = kmeans(dataK,4,'MaxIter',1000,'start','cluster','Replicates',10);
+[idx3,c3,sumd3] = kmeans(dataK,3,'MaxIter',1000,'start','cluster','Replicates',10);
+[idx2,c2,sumd2] = kmeans(dataK,2,'MaxIter',1000,'start','cluster','Replicates',10);
+
+idx4 = [data1(:,1) idx4];
+idx3 = [data1(:,1) idx3];
+idx2 = [data1(:,1) idx2];
+dlmwrite('../data/censusTract-4.csv',idx4,'delimiter',',','precision',7);
+dlmwrite('../data/censusTract-3.csv',idx3,'delimiter',',','precision',7);
+dlmwrite('../data/censusTract-2.csv',idx2,'delimiter',',','precision',7);
+
+%%
+%just the counts
+data1 = csvread('../data/censusTractCounts.csv');
+dataK = data1(:,2:size(data1,2)) ; 
+for k = 1: size(dataK,2) 
+    dataK(:,k) = dataK(:,k) / max(dataK(:,k)) ; 
+end
+[idx4,c4,sumd4] = kmeans(dataK,4,'MaxIter',1000,'start','cluster','Replicates',10);
+[idx3,c3,sumd3] = kmeans(dataK,3,'MaxIter',1000,'start','cluster','Replicates',10);
+[idx2,c2,sumd2] = kmeans(dataK,2,'MaxIter',1000,'start','cluster','Replicates',10);
+
+idx4 = [data1(:,1) idx4];
+idx3 = [data1(:,1) idx3];
+idx2 = [data1(:,1) idx2];
+dlmwrite('../data/censusTractCounts-4.csv',idx4,'delimiter',',','precision',7);
+dlmwrite('../data/censusTractCounts-3.csv',idx3,'delimiter',',','precision',7);
+dlmwrite('../data/censusTractCounts-2.csv',idx2,'delimiter',',','precision',7);
+
+
+
+
+
 
 
 
