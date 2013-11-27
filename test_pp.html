@@ -16,13 +16,13 @@ path {
 div.tooltip {   
   position: absolute;           
   text-align: center;           
-  width: 150px;                  
+  width: 300px;                  
   height: 25px;                 
   padding: 2px;             
-  font-size: 10px;     
+  font-size: 14px;     
   background: #FFFFE0;
-  border: 1px;      
-  border-radius: 8px;           
+  border: 1.5px;      
+  border-radius: 20px;           
   pointer-events: none;         
 }     
 
@@ -61,7 +61,8 @@ form {
  
         var margin = {top: 40, right: 20, bottom: 30, left: 40},
             width = 960 - margin.left - margin.right,
-            height = 500 - margin.top - margin.bottom;
+            height = 500 - margin.top - margin.bottom,
+            centered = null;
         
         var x = d3.scale.ordinal()
             .rangeRoundBands([0, width], .1);
@@ -85,9 +86,9 @@ form {
         
         var path = d3.geo.path()
                 .projection(projection);    
-        
+        var g = svg.append('g');
 
-        function prepareMap(variable) {
+        function initializeMap(variable) {
             svg.append("g")
                 .attr("class", "boroughs")
             .selectAll("path")
@@ -98,7 +99,6 @@ form {
             // How do we color the polygons?
             .style('fill', function(d) {
                 return color(variable[d.id]);}).style('opacity', 0.6)
-        
             
             //Adding mouseevents
             .on("mouseover", function(d) {
@@ -107,16 +107,14 @@ form {
                 .style("opacity", 1)
                 div.text("Precinct " + nameById[d.id] + " : " + variable[d.id] + " Crimes ")
                 .style("left", (d3.event.pageX) + "px")
-                .style("top", (d3.event.pageY -30) + "px");
-            })
+                .style("top", (d3.event.pageY -30) + "px");})
             
             .on("mouseout", function() {
                 d3.select(this)
                 .transition().duration(300)
                 .style("opacity", 0.6);
                 div.transition().duration(300)
-                .style("opacity", 0);
-          })
+                .style("opacity", 0);})
         }
                             
         function ready(error, Map, Data){
@@ -130,10 +128,9 @@ form {
                     
             nyp = Map;
         // Generate the map
-                prepareMap(rateById);
+                initializeMap(rateById);
             }
-    
-        
+
         var rateById = {};
         var rate2ById = {};
         var nameById = {};
@@ -146,31 +143,31 @@ form {
         
             
         d3.select('#button2001').on('click', function(){
+            
             svg.selectAll('path').style('fill', function(d) {
                 return color(rate2ById[d.id]);}).style('opacity', 0.6)
+            
             .on("mouseover", function(d) {
                 d3.select(this).transition().duration(300).style("opacity", 1);
                 div.transition().duration(300)
                 .style("opacity", 1)
                 div.text("Precinct " + nameById[d.id] + " : " + rate2ById[d.id] + " Crimes ")
                 .style("left", (d3.event.pageX) + "px")
-                .style("top", (d3.event.pageY -30) + "px");
-            })            
+                .style("top", (d3.event.pageY -30) + "px");})
+            
             .on("mouseout", function() {
                 d3.select(this)
                 .transition().duration(300)
                 .style("opacity", 0.6);
                 div.transition().duration(300)
-                .style("opacity", 0);
-          })
-
-            
-        
+                .style("opacity", 0);})
         })
         
         d3.select('#button2012').on('click', function(){           
+            
             svg.selectAll('path').style('fill', function(d) {
                 return color(rateById[d.id]);}).style('opacity', 0.6)
+            
             .on("mouseover", function(d) {
                 d3.select(this).transition().duration(300).style("opacity", 1);
                 div.transition().duration(300)
@@ -179,14 +176,13 @@ form {
                 .style("left", (d3.event.pageX) + "px")
                 .style("top", (d3.event.pageY -30) + "px");
             })            
+            
             .on("mouseout", function() {
                 d3.select(this)
                 .transition().duration(300)
                 .style("opacity", 0.6);
                 div.transition().duration(300)
-                .style("opacity", 0);
-          })
-
+                .style("opacity", 0);})
         })
 
         
