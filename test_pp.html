@@ -11,7 +11,6 @@ path {
         stroke: black;
         stroke-width: 0.5px;
     }
-
     
 div.tooltip {   
   position: absolute;           
@@ -25,55 +24,40 @@ div.tooltip {
   border-radius: 20px;           
   pointer-events: none;         
 }     
-
-    
     
 form {
   position: absolute;
   bottom: 10px;
   left: 10px;
-}
-    
-    
-    
-    
+}    
 </style>
-
-
 <body>
- <button id = "button2001">2001</button>
-     <button id = "button2012">2012</button>
-
+    <button id = "button2001">2001</button>
+    <button id = "button2012">2012</button>
+    
     <script src="http://d3js.org/d3.v3.min.js"></script>
     <script src="http://d3js.org/queue.v1.min.js"></script>
     <script type="text/javascript" src="http://d3js.org/topojson.v0.min.js"></script>
 
     <script>
         var screenwidth = 900,
-        screenheight = 800;       
+            screenheight = 800;       
 
 // To be used for quantizing data to colors    
         var color_domain = [-30, 0, 500, 1000, 2000, 5000]
-        var color = d3.scale.threshold()
-          .domain(color_domain)
-          .range(["#adfcad", "#ffcb40", "#ffba00", "#ff7d73", "#ff4e40", "#ff1300"]);    
         
- 
+        var color = d3.scale.threshold()
+            .domain(color_domain)
+            .range(["#adfcad", "#ffcb40", "#ffba00", "#ff7d73", "#ff4e40", "#ff1300"]);    
+         
         var margin = {top: 40, right: 20, bottom: 30, left: 40},
             width = 960 - margin.left - margin.right,
             height = 500 - margin.top - margin.bottom,
             centered = null;
         
-        var x = d3.scale.ordinal()
-            .rangeRoundBands([0, width], .1);
-        
-        var y = d3.scale.linear()
-            .range([height, 0]);
-        
         var svg = d3.select("body").append("svg")
             .attr("width", screenwidth + margin.left + margin.right)
-            .attr("height", screenheight + margin.top + margin.bottom)
-        
+            .attr("height", screenheight + margin.top + margin.bottom)        
         
         var div = d3.select("body").append("div")   
             .attr("class", "tooltip")               
@@ -86,15 +70,21 @@ form {
         
         var path = d3.geo.path()
                 .projection(projection);    
-        var g = svg.append('g');
+        
+        var zoom = d3.behavior.zoom()
+                .translate(projection.translate())
+                .scale(projection.scale())
+                .scaleExtent([height, 8*height])
+                .on('zoom', zoomed);
+        
+        var g = svg.append('g').call(zoom);
 
         function initializeMap(variable) {
-            svg.append("g")
-                .attr("class", "boroughs")
-            .selectAll("path")
+            g.selectAll("path")
                 .data(topojson.object(nyp, nyp.objects.nypp).geometries)
             .enter().append("path")
             .attr('d', path)
+
             
             // How do we color the polygons?
             .style('fill', function(d) {
@@ -102,8 +92,8 @@ form {
             
             //Adding mouseevents
             .on("mouseover", function(d) {
-                d3.select(this).transition().duration(300).style("opacity", 1);
-                div.transition().duration(300)
+                d3.select(this).transition().duration(150).style("opacity", 1);
+                div.transition().duration(150)
                 .style("opacity", 1)
                 div.text("Precinct " + nameById[d.id] + " : " + variable[d.id] + " Crimes ")
                 .style("left", (d3.event.pageX) + "px")
@@ -111,10 +101,31 @@ form {
             
             .on("mouseout", function() {
                 d3.select(this)
-                .transition().duration(300)
+                .transition().duration(150)
                 .style("opacity", 0.6);
-                div.transition().duration(300)
+                div.transition().duration(150)
                 .style("opacity", 0);})
+            
+            .on('click', clicked)
+        }
+        
+        function zoomed() {
+            projection.translate(d3.event.translate).scale(d3.event.scale);
+            g.selectAll('path').attr('d', path);
+        }
+        
+        function clicked(d){
+            var centroid = path.centroid(d)
+                translate = projection.translate();
+            
+            projection.translate([translate[0] - centroid[0] + width/2,
+                                  translate[1] - centroid[1] + height/2]);
+            
+            zoom.translate(projection.translate());
+            
+            g.selectAll('path').transition()
+                .duration(700)
+                .attr('d',path);
         }
                             
         function ready(error, Map, Data){
@@ -144,12 +155,10 @@ form {
             
         d3.select('#button2001').on('click', function(){
             
-            svg.selectAll('path').style('fill', function(d) {
-                return color(rate2ById[d.id]);}).style('opacity', 0.6)
-            
+
             .on("mouseover", function(d) {
-                d3.select(this).transition().duration(300).style("opacity", 1);
-                div.transition().duration(300)
+                d3.select(this).transition().duration(150).style("opacity", 1);
+                div.transition().duration(150)
                 .style("opacity", 1)
                 div.text("Precinct " + nameById[d.id] + " : " + rate2ById[d.id] + " Crimes ")
                 .style("left", (d3.event.pageX) + "px")
@@ -157,9 +166,9 @@ form {
             
             .on("mouseout", function() {
                 d3.select(this)
-                .transition().duration(300)
+                .transition().duration(150)
                 .style("opacity", 0.6);
-                div.transition().duration(300)
+                div.transition().duration(150)
                 .style("opacity", 0);})
         })
         
@@ -169,8 +178,8 @@ form {
                 return color(rateById[d.id]);}).style('opacity', 0.6)
             
             .on("mouseover", function(d) {
-                d3.select(this).transition().duration(300).style("opacity", 1);
-                div.transition().duration(300)
+                d3.select(this).transition().duration(150).style("opacity", 1);
+                div.transition().duration(150)
                 .style("opacity", 1)
                 div.text("Precinct " + nameById[d.id] + " : " + rateById[d.id] + " Crimes ")
                 .style("left", (d3.event.pageX) + "px")
@@ -179,9 +188,9 @@ form {
             
             .on("mouseout", function() {
                 d3.select(this)
-                .transition().duration(300)
+                .transition().duration(150)
                 .style("opacity", 0.6);
-                div.transition().duration(300)
+                div.transition().duration(150)
                 .style("opacity", 0);})
         })
 
