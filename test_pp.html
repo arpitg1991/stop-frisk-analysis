@@ -15,14 +15,16 @@ path {
 div.tooltip {   
   position: absolute;           
   text-align: center;           
-  width: 300px;                  
-  height: 25px;                 
-  padding: 2px;             
-  font-size: 14px;     
-  background: #FFFFE0;
-  border: 1.5px;      
+  width: 110px;                  
+  height: 35px;                 
+  padding: 6px;             
+  font-size: 12px;     
+  background-color: rgba(28, 28, 28, 0.6);
+  border: 1.5px;    
+  vertical-align: middle;
   border-radius: 20px;           
-  pointer-events: none;         
+  pointer-events: none; 
+  color : white;
 }     
     
 form {
@@ -61,7 +63,7 @@ form {
         
         var div = d3.select("body").append("div")   
             .attr("class", "tooltip")               
-            .style("opacity", 0);
+            .style("opacity", 0.5);
            
         var projection = d3.geo.mercator()
             .center([-73.94, 40.70])
@@ -73,6 +75,17 @@ form {
         
         var g = svg.append('g');
 
+        
+        
+        var textBoxContainer = d3.select('body').append('svg').attr('width',300).attr('height',200);
+        var textBox = textBoxContainer.append('rect')
+            .attr('x', screenwidth - 500)
+            .attr('y', screenheight-200)
+            .attr('width', 150)
+            .attr('height', 100);
+        
+        
+        
         function initializeMap(variable) {
             g.selectAll("path")
                 .data(topojson.object(nyp, nyp.objects.nypp).geometries)
@@ -91,7 +104,8 @@ form {
                 .style("opacity", 1)
                 div.text("Precinct " + nameById[d.id] + " : " + variable[d.id] + " Crimes ")
                 .style("left", (d3.event.pageX) + "px")
-                .style("top", (d3.event.pageY -30) + "px");})
+                .style("top", (d3.event.pageY -50) + "px");})
+            
             
             .on("mouseout", function() {
                 d3.select(this)
@@ -150,6 +164,17 @@ form {
                 .duration(350)
                 .attr('transform', 'translate(' + width / 2 + ',' + height/2 + ')scale(' + k + ')translate(' + -x + ',' + -y + ')')
                 .style('stroke-width', 1.5/k + 'px');
+
+            // When we focus, let's remove the tool tip, but supplement with a data table at the corner
+            d3.select(this)
+                .transition().duration(150)
+                .style("opacity", 1);
+                div.transition().duration(150)
+                .style("opacity", 0)
+                  
+        
+
+
         }
         
         
@@ -221,6 +246,6 @@ form {
                 .style("opacity", 0);})
         })
 
-        
+        textBox;
         
     </script>
