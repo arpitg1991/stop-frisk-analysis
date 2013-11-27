@@ -51,8 +51,8 @@ form {
             .range(["#adfcad", "#ffcb40", "#ffba00", "#ff7d73", "#ff4e40", "#ff1300"]);    
          
         var margin = {top: 40, right: 20, bottom: 30, left: 40},
-            width = 960 - margin.left - margin.right,
-            height = 500 - margin.top - margin.bottom,
+            width = screenwidth - margin.left - margin.right,
+            height = screenheight - margin.top - margin.bottom,
             centered = null;
         
         var svg = d3.select("body").append("svg")
@@ -102,27 +102,9 @@ form {
             
             .on('click', clicked)
         }
-        
-    /*    function clicked(d){
-            if (!d || centered === d) {
-                projection.translate([width / 2, height / 2]);
-                centered = null;
-            }
-            else {
-                var centroid = path.centroid(d),
-                    translate = projection.translate();
-                projection.translate([
-                    translate[0] - centroid[0] + width / 2,
-                    translate[1] - centroid[1] + height / 2]);
-                centered = d;
-            }
-            
-            g.selectAll('path').transition()
-                .duration(750)
-                .attr('d', path);
-        }*/
-                 
-        
+
+// PAN ONLY
+        /*
         function clicked(d){
             var x = 0;
             var y = 0;
@@ -141,6 +123,37 @@ form {
                 .duration(350)
                 .attr('transform', 'translate(' + x + ',' + y + ')');
         }
+        */
+        
+// ZOOM AND PAN
+        function clicked(d){
+            var x,y,k;
+            
+            if (d && centered !== d ) {
+                var centroid = path.centroid(d);
+                x = centroid[0]
+                y = centroid[1];
+                k = 3;
+                centered = d;
+            }
+            else {
+                x = width / 2;
+                y = height / 2;
+                k = 1;
+                centered = null;
+            }
+            
+            g.selectAll('path')
+                .classed('active', centered && function(d) { return d === centered; } ) ;
+            
+            g.transition()
+                .duration(350)
+                .attr('transform', 'translate(' + width / 2 + ',' + height/2 + ')scale(' + k + ')translate(' + -x + ',' + -y + ')')
+                .style('stroke-width', 1.5/k + 'px');
+        }
+        
+        
+        
         function ready(error, Map, Data){
         // process the data    
             // Store data from csv into arrays, whose indices match the map ids
