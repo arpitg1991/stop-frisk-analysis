@@ -4,7 +4,7 @@
 
 body {
   font: 10px sans-serif;
-  background-color:darkgrey;
+  background-color:black;
 }
     
 path {
@@ -25,13 +25,16 @@ div.tooltip {
   border-radius: 20px;           
   pointer-events: none; 
   color : white;
-}     
+    }     
     
 form {
   position: absolute;
   bottom: 10px;
   left: 10px;
-}    
+}   
+    
+
+    
 </style>
 <body>
     <button id = "button2001">2001</button>
@@ -76,16 +79,6 @@ form {
         var g = svg.append('g');
 
         
-        
-        var textBoxContainer = d3.select('body').append('svg').attr('width',300).attr('height',200);
-        var textBox = textBoxContainer.append('rect')
-            .attr('x', screenwidth - 500)
-            .attr('y', screenheight-200)
-            .attr('width', 150)
-            .attr('height', 100);
-        
-        
-        
         function initializeMap(variable) {
             g.selectAll("path")
                 .data(topojson.object(nyp, nyp.objects.nypp).geometries)
@@ -117,66 +110,6 @@ form {
             .on('click', clicked)
         }
 
-// PAN ONLY
-        /*
-        function clicked(d){
-            var x = 0;
-            var y = 0;
-            
-            if (!d || centered ===d) {
-                centered = null;
-            }
-            else {
-                var centroid = path.centroid(d);
-                x = width / 2 - centroid[0];
-                y = height / 2 - centroid[1];
-                centered = d;
-            }
-            
-            g.transition()
-                .duration(350)
-                .attr('transform', 'translate(' + x + ',' + y + ')');
-        }
-        */
-        
-// ZOOM AND PAN
-        function clicked(d){
-            var x,y,k;
-            
-            if (d && centered !== d ) {
-                var centroid = path.centroid(d);
-                x = centroid[0]
-                y = centroid[1];
-                k = 3;
-                centered = d;
-            }
-            else {
-                x = width / 2;
-                y = height / 2;
-                k = 1;
-                centered = null;
-            }
-            
-            g.selectAll('path')
-                .classed('active', centered && function(d) { return d === centered; } ) ;
-            
-            g.transition()
-                .duration(350)
-                .attr('transform', 'translate(' + width / 2 + ',' + height/2 + ')scale(' + k + ')translate(' + -x + ',' + -y + ')')
-                .style('stroke-width', 1.5/k + 'px');
-
-            // When we focus, let's remove the tool tip, but supplement with a data table at the corner
-            d3.select(this)
-                .transition().duration(150)
-                .style("opacity", 1);
-                div.transition().duration(150)
-                .style("opacity", 0)
-                  
-        
-
-
-        }
-        
         
         
         function ready(error, Map, Data){
@@ -245,7 +178,75 @@ form {
                 div.transition().duration(150)
                 .style("opacity", 0);})
         })
+        
 
-        textBox;
+// PAN ONLY
+        /*
+        function clicked(d){
+            var x = 0;
+            var y = 0;
+            
+            if (!d || centered ===d) {
+                centered = null;
+            }
+            else {
+                var centroid = path.centroid(d);
+                x = width / 2 - centroid[0];
+                y = height / 2 - centroid[1];
+                centered = d;
+            }
+            
+            g.transition()
+                .duration(350)
+                .attr('transform', 'translate(' + x + ',' + y + ')');
+        }
+        */
+        
+// ZOOM AND PAN
+        function clicked(d){
+            var x,y,k;
+            
+            if (d && centered !== d ) {
+                var centroid = path.centroid(d);
+                x = centroid[0]
+                y = centroid[1];
+                k = 3;
+                centered = d;
+            }
+            else {
+                x = width / 2;
+                y = height / 2;
+                k = 1;
+                centered = null;
+            }
+            
+            g.selectAll('path')
+                .classed('active', centered && function(d) { return d === centered; } ) ;
+            
+            g.transition()
+                .duration(350)
+                .attr('transform', 'translate(' + width / 2 + ',' + height/2 + ')scale(' + k + ')translate(' + -x + ',' + -y + ')')
+                .style('stroke-width', 1.5/k + 'px');
+
+            // When we focus, let's remove the tool tip, but supplement with a data table at the corner
+            d3.select(this)
+                .transition().duration(150)
+                .style("opacity", 1);
+            
+            if (centered === d){
+            div.transition().duration(300)
+                //.style("opacity", 0)
+                .style("left", (screenwidth - 170) + "px")
+                .style("top", (screenheight - 100) + "px") 
+                .style('height', 200 + 'px')
+                .style('width', 200 + 'px')
+            }
+            else {
+            div.transition().duration(150)
+            //.style("opacity", 0)
+            .style('height', 40 + 'px')
+            .style('width', 110 + 'px')
+            }
+        }       
         
     </script>
