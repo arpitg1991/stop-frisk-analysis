@@ -103,7 +103,7 @@ form {
             .on('click', clicked)
         }
         
-        function clicked(d){
+    /*    function clicked(d){
             if (!d || centered === d) {
                 projection.translate([width / 2, height / 2]);
                 centered = null;
@@ -120,8 +120,27 @@ form {
             g.selectAll('path').transition()
                 .duration(750)
                 .attr('d', path);
+        }*/
+                 
+        
+        function clicked(d){
+            var x = 0;
+            var y = 0;
+            
+            if (!d || centered ===d) {
+                centered = null;
+            }
+            else {
+                var centroid = path.centroid(d);
+                x = width / 2 - centroid[0];
+                y = height / 2 - centroid[1];
+                centered = d;
+            }
+            
+            g.transition()
+                .duration(350)
+                .attr('transform', 'translate(' + x + ',' + y + ')');
         }
-                            
         function ready(error, Map, Data){
         // process the data    
             // Store data from csv into arrays, whose indices match the map ids
