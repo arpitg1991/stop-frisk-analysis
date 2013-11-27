@@ -71,13 +71,7 @@ form {
         var path = d3.geo.path()
                 .projection(projection);    
         
-        var zoom = d3.behavior.zoom()
-                .translate(projection.translate())
-                .scale(projection.scale())
-                .scaleExtent([height, 8*height])
-                .on('zoom', zoomed);
-        
-        var g = svg.append('g').call(zoom);
+        var g = svg.append('g');
 
         function initializeMap(variable) {
             g.selectAll("path")
@@ -109,23 +103,23 @@ form {
             .on('click', clicked)
         }
         
-        function zoomed() {
-            projection.translate(d3.event.translate).scale(d3.event.scale);
-            g.selectAll('path').attr('d', path);
-        }
-        
         function clicked(d){
-            var centroid = path.centroid(d)
-                translate = projection.translate();
-            
-            projection.translate([translate[0] - centroid[0] + width/2,
-                                  translate[1] - centroid[1] + height/2]);
-            
-            zoom.translate(projection.translate());
+            if (!d || centered === d) {
+                projection.translate([width / 2, height / 2]);
+                centered = null;
+            }
+            else {
+                var centroid = path.centroid(d),
+                    translate = projection.translate();
+                projection.translate([
+                    translate[0] - centroid[0] + width / 2,
+                    translate[1] - centroid[1] + height / 2]);
+                centered = d;
+            }
             
             g.selectAll('path').transition()
-                .duration(700)
-                .attr('d',path);
+                .duration(750)
+                .attr('d', path);
         }
                             
         function ready(error, Map, Data){
@@ -155,7 +149,8 @@ form {
             
         d3.select('#button2001').on('click', function(){
             
-
+            svg.selectAll('path').style('fill', function(d) {
+                return color(rate2ById[d.id]);}).style('opacity', 0.6)            
             .on("mouseover", function(d) {
                 d3.select(this).transition().duration(150).style("opacity", 1);
                 div.transition().duration(150)
