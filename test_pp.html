@@ -150,8 +150,8 @@ form {
         var DOMAIN;
             
         queue()
-            .defer(d3.json, "data/nypp.json")
-            .defer(d3.csv, "data/crimeByPP2012.csv")
+            .defer(d3.json,"https://dl.dropboxusercontent.com/u/60227913/nycCrimeFrisk/nypp.json")
+            .defer(d3.csv,"https://dl.dropboxusercontent.com/u/60227913/nycCrimeFrisk/crimeByPP2012.csv")
             .await(ready);
 
 // ASSIGN FUNCTIONS TO BUTTONS
