@@ -11,13 +11,40 @@ path {
         stroke: black;
         stroke-width: 0.001px;
     }
+
+
+
+.button {color:black; 
+         font-size: small;
+         position : fixed;
+         width : 150px;
+    }
+    #button_totalCrimes { 
+        top: 0px;
+        left: 0px;
+    }         
+    #button_grade1 { 
+        top: 0px;
+        left: 150px;
+    }         
+    #button_grade2 { 
+        top: 0px;
+        left: 300px;
+    }         
+    #button_grade3 { 
+        top: 0px;
+        left: 450px;
+    }         
+     
+
+    
     
 div.tooltip {   
   position: absolute;           
   text-align: center;           
-  width: 110px;                  
-  height: 35px;                 
-  padding: 6px;             
+  width: 140px;                  
+  height: 30px;                 
+  padding: 10px;             
   font-size: 12px;     
   background-color: rgba(28, 28, 28, 0.6);
   border: 1.5px;    
@@ -25,6 +52,7 @@ div.tooltip {
   border-radius: 20px;           
   pointer-events: none; 
   color : white;
+  white-space : pre;
     }     
     
 form {
@@ -39,11 +67,12 @@ form {
     
 </style>
 <body>
-    <button id = "button_totalCrimes">Total Crimes</button>
-    <button id = "button_grade1">Grade 1</button>
-    <button id = "button_grade2">Grade 2</button>
-    <button id = "button_grade3">Grade 3</button>
-    
+<div>
+    <button id = "button_totalCrimes" class = 'button'>Total Crimes</button>
+    <button id = "button_grade1" class = 'button'>Grade 1</button>
+    <button id = "button_grade2" class = 'button'>Grade 2</button>
+    <button id = "button_grade3" class = 'button'>Grade 3</button>
+</div>
     <script src="http://d3js.org/d3.v3.min.js"></script>
     <script src="http://d3js.org/queue.v1.min.js"></script>
     <script type="text/javascript" src="http://d3js.org/topojson.v0.min.js"></script>
@@ -64,7 +93,7 @@ form {
 
         var quantize;
         
-        var margin = {top: 40, right: 20, bottom: 30, left: 40},
+        var margin = {top: 0, right: 0, bottom: 0, left: 0},
             width = screenwidth - margin.left - margin.right,
             height = screenheight - margin.top - margin.bottom,
             centered = null;
@@ -110,7 +139,8 @@ form {
                 d3.select(this).transition().duration(150).style("opacity", 1);
                 div.transition().duration(150)
                 .style("opacity", 1)
-                div.text("Precinct " + nameById[d.id] + " : " + variable[d.id] + " Crimes ")
+                div.html("Precinct " + nameById[d.id] + "<br>" +
+                         variable[d.id] + " crimes ")
                 .style("left", (d3.event.pageX) + "px")
                 .style("top", (d3.event.pageY -50) + "px");})
             
@@ -169,8 +199,8 @@ form {
                 d3.select(this).transition().duration(150).style("opacity", 1);
                 div.transition().duration(150)
                 .style("opacity", 1)
-                div.text("Precinct " + nameById[d.id] + " : "
-                         + totalCrimesById[d.id] + " Total crimes ")
+                div.html("Precinct " + nameById[d.id] + "<br>" +
+                         totalCrimesById[d.id] + " crimes ")
                 .style("left", (d3.event.pageX) + "px")
                 .style("top", (d3.event.pageY -30) + "px");})
             
@@ -195,8 +225,8 @@ form {
                 d3.select(this).transition().duration(150).style("opacity", 1);
                 div.transition().duration(150)
                 .style("opacity", 1)
-                div.text("Precinct " + nameById[d.id] + " : "
-                         + crimes1ById[d.id] + " Grade 1 crimes ")
+                div.html("Precinct " + nameById[d.id] + "<br>" +
+                         + crimes1ById[d.id] + " crimes ")
                 .style("left", (d3.event.pageX) + "px")
                 .style("top", (d3.event.pageY -30) + "px");})
             
@@ -221,8 +251,8 @@ form {
                 d3.select(this).transition().duration(150).style("opacity", 1);
                 div.transition().duration(150)
                 .style("opacity", 1)
-                div.text("Precinct " + nameById[d.id] + " : "
-                         + crimes2ById[d.id] + " Grade 2 crimes ")
+                div.html("Precinct " + nameById[d.id] + "<br>" +
+                         + crimes2ById[d.id] + " crimes ")
                 .style("left", (d3.event.pageX) + "px")
                 .style("top", (d3.event.pageY -30) + "px");})
             
@@ -247,8 +277,8 @@ form {
                 d3.select(this).transition().duration(150).style("opacity", 1);
                 div.transition().duration(150)
                 .style("opacity", 1)
-                div.text("Precinct " + nameById[d.id] + " : "
-                         + crimes3ById[d.id] + " Grade 3 crimes ")
+                div.html("Precinct " + nameById[d.id] + "<br>" +
+                         + crimes3ById[d.id] + " crimes ")
                 .style("left", (d3.event.pageX) + "px")
                 .style("top", (d3.event.pageY -30) + "px");})
             
@@ -321,20 +351,42 @@ form {
             
             div.transition().duration(300)
                 //.style("opacity", 0)
-                .style("left", (screenwidth - 170) + "px")
-                .style("top", (screenheight - 100) + "px") 
-                .style('height', 200 + 'px')
-                .style('width', 200 + 'px')
+                .style("left", 0 + "px")
+                .style("top", 30 + "px") 
+                .style('height', 240 + 'px')
+                .style('width', 240 + 'px')
+                div.html("Precinct " + nameById[d.id] + "<br>" +
+                         "<br>" + 
+                         "Total Crimes: " + totalCrimesById[d.id] + "<br>" +
+                         "Grade 1: " + crimes1ById[d.id] + "<br>" +
+                         "Grade 2: " + crimes2ById[d.id] + "<br>" + 
+                         "Grade 3: " + crimes3ById[d.id] + "<br>" +
+                         "<br>" +
+                         "Number of stops: " +  "<br>" +
+                         "Number of stops of Blacks:" + "<br>" +
+                         "...that were successful: " +  "<br>" +
+                         "...in which physical force was used: " +  "<br>" +
+                         "<br>" +
+                         "Number of frisks: " + "<br>" +
+                         "% White: " + "<br>" + 
+                         "% Black: " + "<br>" +
+                         "% Other: " + "<br>" +
+                         "<br>"                         
+                        )
+                .style("left", (d3.event.pageX) +"px")
+                .style("top", (d3.event.pageY -30) + "px")
+                .style('text-align', 'left')
             }
-            else {
+            else { // return to normal
             d3.select(this)
                 .transition().duration(150)
                 .style("opacity", 1);
                 
             div.transition().duration(150)
             //.style("opacity", 0)
-            .style('height', 40 + 'px')
-            .style('width', 110 + 'px')
+            .style('height', 30 + 'px')
+            .style('width', 140 + 'px')
+            .style('text-align', 'center')
             }
         }       
         
