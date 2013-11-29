@@ -14,7 +14,7 @@ path {
     
 form {
   position: fixed;
-  top: 5px;
+  top: 0px;
   left: 10px;
   width: 40px;
 }
@@ -37,7 +37,7 @@ div.tooltip {
     
 form {
   position: absolute;
-  bottom: 10px;
+  top: 10px;
   left: 10px;
 }   
     
@@ -46,8 +46,7 @@ form {
 <body>
 
 <form>
-  <label for="interpolate">Pick option!</label>
-  <select id="interpolate"></select><br>
+  <select id="vars"></select><br>
 </form>
     
     <script src="http://d3js.org/d3.v3.min.js"></script>
@@ -132,7 +131,7 @@ form {
                 div.transition().duration(150)
                 .style("opacity", 0);})
             
-            .on('click', clicked)
+            .on('click', clicked)            
         }
 
         
@@ -154,33 +153,11 @@ form {
                 g3RapeById[d.Precinct] = +d.G3_Rape;                
                 nameById[d.Precinct] = +d.Precinct;
             });
-                  
-            d3.select("#interpolate")
-    .on("change", change)
-  .selectAll("option")
-    .data([
-        "Grade 1 crimes",
-        "Grade 2 crimes",
-        "Grade 3 crimes"
-    ])
-  .enter().append("option")
-    .attr("value", function(d) { return d; })
-    .text(function(d) { return d; });
-        
-            
-    function change() {
-      temp = this.value
-      DOMAIN = d3.extent(document.getElementsByName(this.value));
-      alert(document.getElementsByName(this.value)[0]);
-    }
-            
-            
-            
-            nyp = Map;
-        // Generate the map
-                initializeMap(totalCrimesById);
 
-            
+            nyp = Map;
+
+        // Generate the map
+                initializeMap(totalCrimesById);            
         }
         
 
@@ -205,115 +182,59 @@ form {
               //.defer(d3.csv,"https://dl.dropboxusercontent.com/u/60227913/nycCrimeFrisk/crimeByPP2012.csv")
             .await(ready);
 
-// ASSIGN FUNCTIONS TO BUTTONS
-            
- /*       d3.select('#button_totalCrimes').on('click', function(){
-            DOMAIN = d3.extent(totalCrimesById)
-            quantize = d3.scale.quantile()
-                .domain(DOMAIN)
-                .range(d3.range(5).map(function (i) { return color(i);}));
-            
-            svg.selectAll('path').style('fill', function(d) {
-                return quantize(totalCrimesById[d.id]);}).style('opacity', regularOpacity)
-            
-            .on("mouseover", function(d) {
-                d3.select(this).transition().duration(150).style("opacity", 1);
-                div.transition().duration(150)
-                .style("opacity", 1)
-                div.html("Precinct " + nameById[d.id] + "<br>" +
-                         totalCrimesById[d.id] + " crimes ")
-                .style("left", (d3.event.pageX) + "px")
-                .style("top", (d3.event.pageY -30) + "px");})
-            
-            .on("mouseout", function() {
-                d3.select(this)
-                .transition().duration(150)
-                .style("opacity", regularOpacity);
-                div.transition().duration(150)
-                .style("opacity", 0);})
-        })*/
         
+// Update map
+        
+            
+d3.select("#vars")
+    .on("change", change)
+  .selectAll("option")
+// add options HERE
+    .data(["All crimes",
+        "Grade 1 crimes",
+        "Grade 2 crimes",
+        "Grade 3 crimes"
+    ])
+  .enter().append("option")
+    .attr("value", function(d) { return d; })
+    .text(function(d) { return d; });
+            
+            
+function change() {
+    temp = this.value      
+    // add variables HERE
+      if(temp == "Grade 1 crimes") {variable = crimes1ById}
+      else if(temp == "Grade 2 crimes") {variable = crimes2ById}
+      else if(temp == "Grade 3 crimes") {variable = crimes3ById}
+      else if(temp == "All crimes") {variable = totalCrimesById}
+    
+    DOMAIN = d3.extent(variable)
+    quantize = d3.scale.quantile()
+        .domain(DOMAIN)
+        .range(d3.range(5).map(function (i) {return color(i);}));
+    // update polygon color
+    svg.selectAll('path').style('fill', function(d) {
+        return quantize(variable[d.id]);})
+        .style('opacity', regularOpacity)
+    // update tooltip
+    .on("mouseover", function(d) {
+        d3.select(this).transition().duration(150).style("opacity", 1);
+        div.transition().duration(150)
+        .style("opacity", 1)
+        div.html("Precinct " + nameById[d.id] + "<br>" +
+                 + variable[d.id] + " crimes ")
+        .style("left", (d3.event.pageX) + "px")
+        .style("top", (d3.event.pageY -30) + "px");})
+/*    
+    .on("mouseout", function() {
+        d3.select(this)
+        .transition().duration(150)
+        .style("opacity", regularOpacity);
+        div.transition().duration(150)
+        .style("opacity", 0);}) */   
+    }
 
-
-        
-        d3.select('#button_grade2').on('click', function(){
-            DOMAIN = d3.extent(crimes2ById)
-            quantize = d3.scale.quantile()
-                .domain(DOMAIN)
-                .range(d3.range(5).map(function (i) { return color(i);}));
-            
-            svg.selectAll('path').style('fill', function(d) {
-                return quantize(crimes2ById[d.id]);}).style('opacity', regularOpacity)
-            
-            .on("mouseover", function(d) {
-                d3.select(this).transition().duration(150).style("opacity", 1);
-                div.transition().duration(150)
-                .style("opacity", 1)
-                div.html("Precinct " + nameById[d.id] + "<br>" +
-                         + crimes2ById[d.id] + " crimes ")
-                .style("left", (d3.event.pageX) + "px")
-                .style("top", (d3.event.pageY -30) + "px");})
-            
-            .on("mouseout", function() {
-                d3.select(this)
-                .transition().duration(150)
-                .style("opacity", regularOpacity);
-                div.transition().duration(150)
-                .style("opacity", 0);})
-        })
-        
-        d3.select('#button_grade3').on('click', function(){
-            DOMAIN = d3.extent(crimes3ById)
-            quantize = d3.scale.quantile()
-                .domain(DOMAIN)
-                .range(d3.range(5).map(function (i) { return color(i);}));
-            
-            svg.selectAll('path').style('fill', function(d) {
-                return quantize(crimes3ById[d.id]);}).style('opacity', regularOpacity)
-            
-            .on("mouseover", function(d) {
-                d3.select(this).transition().duration(150).style("opacity", 1);
-                div.transition().duration(150)
-                .style("opacity", 1)
-                div.html("Precinct " + nameById[d.id] + "<br>" +
-                         + crimes3ById[d.id] + " crimes ")
-                .style("left", (d3.event.pageX) + "px")
-                .style("top", (d3.event.pageY -30) + "px");})
-            
-            .on("mouseout", function() {
-                d3.select(this)
-                .transition().duration(150)
-                .style("opacity", regularOpacity);
-                div.transition().duration(150)
-                .style("opacity", 0);})
-        })
-        
-                        
-
-        
-
-// PAN ONLY
-        /*
-        function clicked(d){
-            var x = 0;
-            var y = 0;
-            
-            if (!d || centered ===d) {
-                centered = null;
-            }
-            else {
-                var centroid = path.centroid(d);
-                x = width / 2 - centroid[0];
-                y = height / 2 - centroid[1];
-                centered = d;
-            }
-            
-            g.transition()
-                .duration(350)
-                .attr('transform', 'translate(' + x + ',' + y + ')');
-        }
-        */
-        
+    
 // ZOOM AND PAN
         function clicked(d){
             var x,y,k;
@@ -349,8 +270,8 @@ form {
             
             div.transition().duration(300)
                 //.style("opacity", 0)
-                .style("left", 0 + "px")
-                .style("top", 30 + "px") 
+                .style("left", 10 + "px")
+                .style("top", 75 + "px") 
                 .style('height', 240 + 'px')
                 .style('width', 240 + 'px')
                 div.html("Precinct " + nameById[d.id] + "<br>" +
