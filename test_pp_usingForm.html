@@ -35,6 +35,26 @@ div.tooltip {
   white-space : pre;
     }     
     
+div.textbox {
+          position: fixed;   
+        top: 50px;
+        left: 10px;
+  text-align: left;           
+  width: 200;                  
+  height: 250px;                 
+  padding: 10px;             
+  font-size: 12px;     
+  background-color: rgba(28, 28, 28, 0.6);
+  border: 1.5px;    
+  vertical-align: middle;
+  border-radius: 20px;           
+  pointer-events: none; 
+  color : white;
+  white-space : pre;
+    }     
+    
+    
+    
 form {
   position: absolute;
   top: 10px;
@@ -81,6 +101,10 @@ form {
         var div = d3.select("body").append("div")   
             .attr("class", "tooltip")               
             .style("opacity", 0.5);
+        
+        var textbox = d3.select('body').append('div')
+            .attr('class', 'textbox')
+            .style('opacity', 0.5);
            
         var projection = d3.geo.mercator()
             .center([-73.94, 40.70])
@@ -267,14 +291,10 @@ function change() {
             d3.select(this)
                 .transition().duration(150)
                 .style("opacity", 1);
-            
-            div.transition().duration(300)
-                //.style("opacity", 0)
-                .style("left", 10 + "px")
-                .style("top", 75 + "px") 
-                .style('height', 240 + 'px')
-                .style('width', 240 + 'px')
-                div.html("Precinct " + nameById[d.id] + "<br>" +
+                d3.select(this).transition().duration(150).style("opacity", 1);
+                textbox.transition().duration(150)
+                .style("opacity", 1)
+                textbox.html("Precinct " + nameById[d.id] + "<br>" +
                          "<br>" + 
                          "Total Crimes: " + totalCrimesById[d.id] + "<br>" +
                          "Grade 1: " + crimes1ById[d.id] + "<br>" +
@@ -292,20 +312,15 @@ function change() {
                          "% Other: " + "<br>" +
                          "<br>"                         
                         )
-                .style("left", (d3.event.pageX) +"px")
-                .style("top", (d3.event.pageY -30) + "px")
-                .style('text-align', 'left')
             }
+            
             else { // return to normal
             d3.select(this)
                 .transition().duration(150)
                 .style("opacity", 1);
                 
-            div.transition().duration(150)
-            //.style("opacity", 0)
-            .style('height', 30 + 'px')
-            .style('width', 140 + 'px')
-            .style('text-align', 'center')
+            textbox.transition().duration(150)
+            .style("opacity", 0)
             }
         }       
         
