@@ -33,14 +33,14 @@ div.tooltip {
   pointer-events: none; 
   color : white;
   white-space : pre;
-    }     
+}     
     
 div.textbox {
-          position: fixed;   
-        top: 50px;
-        left: 10px;
+  position: fixed;   
+  top: 50px;
+  left: 10px;
   text-align: left;           
-  width: 200;                  
+  width: 200px;                  
   height: 250px;                 
   padding: 10px;             
   font-size: 12px;     
@@ -51,36 +51,23 @@ div.textbox {
   pointer-events: none; 
   color : white;
   white-space : pre;
-    }     
-    
-    
-    
-form {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-}   
-    
-    
+}     
+        
 </style>
 <body>
-
 <form>
   <select id="vars"></select><br>
 </form>
     
-    <script src="http://d3js.org/d3.v3.min.js"></script>
-    <script src="http://d3js.org/queue.v1.min.js"></script>
-    <script type="text/javascript" src="http://d3js.org/topojson.v0.min.js"></script>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script type="text/javascript" src="http://d3js.org/topojson.v0.min.js"></script>
 
-    <script>
-        var screenwidth = 900,
-            screenheight = 800;       
-
-// To be used for quantizing data to colors    
+<script>
+    var screenwidth = 900,
+        screenheight = 800;       
 
         var regularOpacity = 0.6
-
         
         var color = d3.scale.pow().exponent(0.5)
             .domain([0,5])
@@ -108,35 +95,29 @@ form {
            
         var projection = d3.geo.mercator()
             .center([-73.94, 40.70])
-            .scale(69000)
-            .translate([(screenwidth) / 2, (screenheight)/2]);
+            .scale(75000)
+            .translate([(screenwidth) / 2, (screenheight)/2 + 50]);
         
         var path = d3.geo.path()
                 .projection(projection);    
         
         var g = svg.append('g');
         
-        var variable = 'G1';
-        
-
+        var variable;
      
         function initializeMap(variable) {
             DOMAIN = d3.extent(variable)
             quantize = d3.scale.quantile()
                 .domain(DOMAIN)
                 .range(d3.range(5).map(function (i) { return color(i);}));
-            
-            
+                        
             g.selectAll("path")
                 .data(topojson.object(nyp, nyp.objects.nypp).geometries)
             .enter().append("path")
             .attr('d', path)
-
-            
-            // How do we color the polygons?
+            //Color polygons
             .style('fill', function(d) {
-                return quantize(variable[d.id]);}).style('opacity', regularOpacity)
-            
+                return quantize(variable[d.id]);}).style('opacity', regularOpacity)            
             //Adding mouseevents
             .on("mouseover", function(d) {
                 d3.select(this).transition().duration(150).style("opacity", 1);
@@ -146,24 +127,19 @@ form {
                          variable[d.id] + " crimes ")
                 .style("left", (d3.event.pageX) + "px")
                 .style("top", (d3.event.pageY -50) + "px");})
-            
-            
             .on("mouseout", function() {
                 d3.select(this)
                 .transition().duration(150)
                 .style("opacity", regularOpacity);
                 div.transition().duration(150)
-                .style("opacity", 0);})
-            
+                .style("opacity", 0);})            
             .on('click', clicked)            
         }
 
         
         function ready(error, Map, Data){
-        // process the data    
             // Store data from csv into arrays, whose indices match the map ids
-            Data.forEach(function(d) {
-                
+            Data.forEach(function(d) {    
                 totalCrimesById[d.Precinct] = +d.total;
                 crimes1ById[d.Precinct] = +d.G1;
                 crimes2ById[d.Precinct] = +d.G2;
@@ -180,12 +156,11 @@ form {
 
             nyp = Map;
 
-        // Generate the map
-                initializeMap(totalCrimesById);            
+            // Generate the map
+            initializeMap(totalCrimesById);            
         }
         
-
-
+        // initialize data
         var totalCrimesById = [];
         var crimes1ById = [];
         var crimes2ById = [];
@@ -198,28 +173,23 @@ form {
         var g3MurderById = [];
         var g3RapeById = [];
         var nameById = [];
-        var DOMAIN;
-            
+        var DOMAIN;            
         queue()
             .defer(d3.json,"https://dl.dropboxusercontent.com/u/60227913/nycCrimeFrisk/nypp.json")
-.defer(d3.csv,"data/crime2012.csv")
-              //.defer(d3.csv,"https://dl.dropboxusercontent.com/u/60227913/nycCrimeFrisk/crimeByPP2012.csv")
+            .defer(d3.csv,"data/crime2012.csv")
             .await(ready);
 
         
-// Update map
-        
-            
+// Update map via dropdown            
 d3.select("#vars")
     .on("change", change)
-  .selectAll("option")
-// add options HERE
+    .selectAll("option")
+    // add options HERE
     .data(["All crimes",
         "Grade 1 crimes",
         "Grade 2 crimes",
-        "Grade 3 crimes"
-    ])
-  .enter().append("option")
+        "Grade 3 crimes"])
+    .enter().append("option")
     .attr("value", function(d) { return d; })
     .text(function(d) { return d; });
             
@@ -249,79 +219,71 @@ function change() {
                  + variable[d.id] + " crimes ")
         .style("left", (d3.event.pageX) + "px")
         .style("top", (d3.event.pageY -30) + "px");})
-/*    
-    .on("mouseout", function() {
-        d3.select(this)
-        .transition().duration(150)
-        .style("opacity", regularOpacity);
-        div.transition().duration(150)
-        .style("opacity", 0);}) */   
-    }
-
+}
     
 // ZOOM AND PAN
-        function clicked(d){
-            var x,y,k;
-            
-            if (d && centered !== d ) {
-                var centroid = path.centroid(d);
-                x = centroid[0]
-                y = centroid[1];
-                k = 2;
-                centered = d;
-            }
-            else {
-                x = width / 2;
-                y = height / 2;
-                k = 1;
-                centered = null;
-            }
-            
-            g.selectAll('path')
-                .classed('active', centered && function(d) { return d === centered; } ) ;
-            
-            g.transition()
-                .duration(350)
-                .attr('transform', 'translate(' + width / 2 + ',' + height/2 + ')scale(' + k + ')translate(' + -x + ',' + -y + ')')
-                .style('stroke-width', 1.5/k + 'px');
+function clicked(d){
+    var x,y,k;
+    
+    if (d && centered !== d ) {
+        var centroid = path.centroid(d);
+        x = centroid[0]
+        y = centroid[1];
+        k = 2;
+        centered = d;
+    }
+    else {
+        x = width / 2;
+        y = height / 2;
+        k = 1;
+        centered = null;
+    }
+    
+    g.selectAll('path')
+        .classed('active', centered && function(d) { return d === centered; } ) ;
+    
+    g.transition()
+        .duration(350)
+        .attr('transform', 'translate(' + width / 2 + ',' + height/2 + ')scale(' + k + ')translate(' + -x + ',' + -y + ')')
+        .style('stroke-width', 1.5/k + 'px');
 
-            // When we focus, let's remove the tool tip, but supplement with a data table at the corner
+    // When we focus, let's remove the tool tip, but supplement with a data table at the corner
 
-            if (! d || centered === d){
-            d3.select(this)
-                .transition().duration(150)
-                .style("opacity", 1);
-                d3.select(this).transition().duration(150).style("opacity", 1);
-                textbox.transition().duration(150)
-                .style("opacity", 1)
-                textbox.html("Precinct " + nameById[d.id] + "<br>" +
-                         "<br>" + 
-                         "Total Crimes: " + totalCrimesById[d.id] + "<br>" +
-                         "Grade 1: " + crimes1ById[d.id] + "<br>" +
-                         "Grade 2: " + crimes2ById[d.id] + "<br>" + 
-                         "Grade 3: " + crimes3ById[d.id] + "<br>" +
-                         "<br>" +
-                         "Number of stops: " +  "<br>" +
-                         "Number of stops of Blacks:" + "<br>" +
-                         "...that were successful: " +  "<br>" +
-                         "...in which physical force was used: " +  "<br>" +
-                         "<br>" +
-                         "Number of frisks: " + "<br>" +
-                         "% White: " + "<br>" + 
-                         "% Black: " + "<br>" +
-                         "% Other: " + "<br>" +
-                         "<br>"                         
-                        )
-            }
-            
-            else { // return to normal
-            d3.select(this)
-                .transition().duration(150)
-                .style("opacity", 1);
-                
-            textbox.transition().duration(150)
-            .style("opacity", 0)
-            }
-        }       
-        
-    </script>
+    if (! d || centered === d){
+    d3.select(this)
+        .transition().duration(350)
+        .style("opacity", 1);
+        d3.select(this).transition().duration(350).style("opacity", 1);
+        textbox.transition().duration(350)
+        .style("opacity", 1)
+        textbox.html("Precinct " + nameById[d.id] + "<br>" +
+                 "<br>" + 
+                 "Total Crimes: " + totalCrimesById[d.id] + "<br>" +
+                 "Grade 1: " + crimes1ById[d.id] + "<br>" +
+                 "Grade 2: " + crimes2ById[d.id] + "<br>" + 
+                 "Grade 3: " + crimes3ById[d.id] + "<br>" +
+                 "<br>" +
+                 "Number of stops: " +  "<br>" +
+                 "Number of stops of Blacks:" + "<br>" +
+                 "...that were successful: " +  "<br>" +
+                 "...in which physical force was used: " +  "<br>" +
+                 "<br>" +
+                 "Number of frisks: " + "<br>" +
+                 "% White: " + "<br>" + 
+                 "% Black: " + "<br>" +
+                 "% Other: " + "<br>" +
+                 "<br>"                         
+                )
+    }
+    
+    else { // return to normal
+    d3.select(this)
+        .transition().duration(350)
+        .style("opacity", 1);
+
+    textbox.transition().duration(350)
+    .style("opacity", 0)
+    }
+}       
+
+</script>
