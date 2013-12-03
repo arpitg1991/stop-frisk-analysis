@@ -108,7 +108,8 @@ li.key {
         var textbox = d3.select('body').append('div')
             .attr('class', 'textbox')
             .style('opacity', 0);
-           
+
+    
         var projection = d3.geo.mercator()
             .center([-73.94, 40.70])
             .scale(75000)
@@ -145,8 +146,8 @@ var ls_w = 20, ls_h = 20;
             .attr('d', path)
             //Color polygons
             .style('fill', function(d) {
-                return quantize(variable[d.id]);}).style('opacity', regularOpacity)            
-            //Adding mouseevents
+                return quantize(variable[d.id]);}).style('opacity', regularOpacity)
+                        //Adding mouseevents
             .on("mouseover", function(d) {
                 d3.select(this).transition().duration(150).style("opacity", 1);
                 div.transition().duration(150)
@@ -177,17 +178,23 @@ var ls_w = 20, ls_h = 20;
   .text(function(d, i){ return legend_labels[i]; })
   .attr('fill', 'white');
     
-    textbox
-    .append('svg').attr('class','svg1').attr('width', bar_width).attr('height', bar_height)
-        .append('rect').attr('class','bar1').attr('x', 10, 'y', 20 ).attr('width', bar_width).attr('height', bar_height).style('fill', 'green');    
-    textbox
-    .append('svg').attr('class','svg2').attr('width', bar_width).attr('height', bar_height)
+textbox.append('svg').attr('class','svg1').attr('width', bar_width).attr('height', bar_height+15)
+        .append('rect').attr('class','bar1').attr('x', 10, 'y', 20 ).attr('width', bar_width).attr('height', bar_height).style('fill', 'green');
+
+textbox.append('svg').attr('class','svg2').attr('width', bar_width).attr('height', bar_height+15)
         .append('rect').attr('class','bar2').attr('x', 10, 'y', 20).attr('width', bar_width).attr('height', bar_height).style('fill', 'blue');
-    textbox        
-    .append('svg').attr('class','svg3').attr('width', bar_width).attr('height', bar_height)
+    
+textbox.append('svg').attr('class','svg3').attr('width', bar_width).attr('height', bar_height+15)
         .append('rect').attr('class','bar3').attr('x', 10, 'y', 20).attr('width', bar_width).attr('height', bar_height).style('fill', 'red');
+
             
-}
+textbox.selectAll('.svg1').append('text').attr('x',40).attr('y',bar_height+15).attr('text-anchor', 'middle').text('Black').attr('fill','white')
+
+textbox.selectAll('.svg2').append('text').attr('x',40).attr('y',bar_height+15).attr('text-anchor', 'middle').text('White').attr('fill','white')
+
+textbox.selectAll('.svg3').append('text').attr('x',40).attr('y',bar_height+15).attr('text-anchor', 'middle').text('Hispanic').attr('fill','white')
+
+        }
 
         
         function ready(error, Map, Data){
