@@ -18,8 +18,6 @@ form {
   left: 10px;
   width: 40px;
 }
-
-    
     
 div.tooltip {   
   position: absolute;           
@@ -46,14 +44,15 @@ div.textbox {
   height: 150px;                 
   padding: 10px;             
   font-size: 12px;     
-  background-color: rgba(28, 28, 28, 0.6);
+  background-color: rgba(96, 96, 96, 0.6);
   border: 1.5px;    
   vertical-align: middle;
   border-radius: 20px;           
   pointer-events: none; 
   color : white;
   white-space : pre;
-}     
+}   
+    
 
     
 .legend {
@@ -73,7 +72,7 @@ li.key {
 </style>
 <body>
 <form>
-  <select id="vars"></select><br>
+  <select id="polyVars"></select><br>
 </form>
     
 <script src="http://d3js.org/d3.v3.min.js"></script>
@@ -108,10 +107,7 @@ li.key {
         
         var textbox = d3.select('body').append('div')
             .attr('class', 'textbox')
-            .style('opacity', 0.5)
-        ;
-
-     var rect = d3.select('textbox').append('svg').attr('width',200).attr('height',200)
+            .style('opacity', 0);
            
         var projection = d3.geo.mercator()
             .center([-73.94, 40.70])
@@ -132,6 +128,10 @@ li.key {
   .enter().append("g")
   .attr("class", "legend");
 var ls_w = 20, ls_h = 20;
+    
+    var bar_width = 73;
+    var bar_height = 100;
+    
     
         function initializeMap(variable) {
             DOMAIN = d3.extent(variable)
@@ -177,16 +177,15 @@ var ls_w = 20, ls_h = 20;
   .text(function(d, i){ return legend_labels[i]; })
   .attr('fill', 'white');
     
-    textbox.append('svg').attr('width', 75).attr('height', 100)
-    .append('rect').attr('x', 10, 'y',10 ).attr('width', 50).attr('height', 100).style('fill', 'green');
-            
-    div.html('blah');
-            
-    textbox.append('svg').attr('width', 75).attr('height', 100)
-    .append('rect').attr('x', 10, 'y', 10).attr('width', 50).attr('height', 100).style('fill', 'blue');
-            
-    textbox.append('svg').attr('width', 75).attr('height', 50)
-    .append('rect').attr('x', 10, 'y', 10).attr('width', 50).attr('height', 100).style('fill', 'red');
+    textbox
+    .append('svg').attr('class','svg1').attr('width', bar_width).attr('height', bar_height)
+        .append('rect').attr('class','bar1').attr('x', 10, 'y', 20 ).attr('width', bar_width).attr('height', bar_height).style('fill', 'green');    
+    textbox
+    .append('svg').attr('class','svg2').attr('width', bar_width).attr('height', bar_height)
+        .append('rect').attr('class','bar2').attr('x', 10, 'y', 20).attr('width', bar_width).attr('height', bar_height).style('fill', 'blue');
+    textbox        
+    .append('svg').attr('class','svg3').attr('width', bar_width).attr('height', bar_height)
+        .append('rect').attr('class','bar3').attr('x', 10, 'y', 20).attr('width', bar_width).attr('height', bar_height).style('fill', 'red');
             
 }
 
@@ -235,7 +234,7 @@ var ls_w = 20, ls_h = 20;
 
         
 // Update map via dropdown            
-d3.select("#vars")
+d3.select("#polyVars")
     .on("change", change)
     .selectAll("option")
     // add options HERE
@@ -304,19 +303,25 @@ function clicked(d){
     // When we focus, let's remove the tool tip, but supplement with a data table at the corner
 
     if (! d || centered === d){
-    d3.select(this)
-        .transition().duration(350)
-        .style("opacity", 1);
+        d3.select(this)
+            .transition().duration(350)
+            .style("opacity", 1);
         d3.select(this).transition().duration(350).style("opacity", 1);
-        textbox.transition().duration(350)
-        .style("opacity", 1)
+            textbox.transition().duration(350)
+            .style("opacity", 1);
+        textbox.selectAll('.bar1').style('fill','white');
+        textbox.selectAll('.bar2').style('fill','black');
+        textbox.selectAll('.bar3').style('fill','grey');
 
+        textbox.selectAll('.bar1').attr('height', crimes1ById[d.id]/10).attr('y',bar_height - crimes1ById[d.id]/10);
+        textbox.selectAll('.bar2').attr('height', crimes2ById[d.id]/10).attr('y',bar_height - crimes2ById[d.id]/10);
+        textbox.selectAll('.bar3').attr('height', crimes3ById[d.id]/10).attr('y',bar_height - crimes3ById[d.id]/10);
     }
     
     else { // return to normal
     d3.select(this)
         .transition().duration(350)
-        .style("opacity", 1);
+        .style("opacity", '1');
 
     textbox.transition().duration(350)
     .style("opacity", 0)
