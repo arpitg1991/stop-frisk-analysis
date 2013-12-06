@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font: 10px sans-serif;
+  background-color:black;
+}
+    
+path {
+        stroke: black;
+        stroke-width: 0.001px;
+    }
+    
+form {
+  position: fixed;
+  top: 0px;
+  left: 10px;
+  width: 40px;
+}
+    
+div.tooltip {   
+  position: absolute;           
+  text-align: center;           
+  width: 140px;                  
+  height: 30px;                 
+  padding: 10px;             
+  font-size: 12px;     
+  background-color: rgba(28, 28, 28, 0.6);
+  border: 1.5px;    
+  vertical-align: middle;
+  border-radius: 20px;           
+  pointer-events: none; 
+  color : white;
+  white-space : pre;
+}     
+    
+div.textbox {
+  position: fixed;   
+  top: 50px;
+  left: 10px;
+  text-align: left;           
+  width: 225px;                  
+  height: 150px;                 
+  padding: 10px;             
+  font-size: 12px;     
+  background-color: rgba(96, 96, 96, 0.6);
+  border: 1.5px;    
+  vertical-align: middle;
+  border-radius: 20px;           
+  pointer-events: none; 
+  color : white;
+  white-space : pre;
+}   
+    
+
+    
+.legend {
+  font-size: 12px;
+}
+
+li.key {
+    border-top-width: 15px;
+    border-top-style: solid;
+    font-size: .75em;
+    width: 10%;
+    padding-left: 0;
+    padding-right: 0;
+        color: white;
+}
+    
+</style>
+<body>
+
+<form>
+  <select id="polyVars"></select><br>
+<!--  <button id = "cycle" class = 'button'>Loop Var</button> -->
+</form>
+    
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script type="text/javascript" src="http://d3js.org/topojson.v0.min.js"></script>
+
+<script>
+    var screenwidth = 1024,
+        screenheight = 768;       
+
+    var regularOpacity = 0.6
+            
+    var margin = {top: 0, right: 0, bottom: 0, left: 0},
+        width = screenwidth - margin.left - margin.right,
+        height = screenheight - margin.top - margin.bottom,
+        centered = null;
+    
+    var svg = d3.select("body").append("svg")
+        .attr("width", screenwidth + margin.left + margin.right)
+        .attr("height", screenheight + margin.top + margin.bottom)        
+    
+    var tooltip = d3.select("body").append("div")   
+        .attr("class", "tooltip")               
+        .style("opacity", 0.5);
+    
+    var textbox = d3.select('body').append('div')
+        .attr('class', 'textbox')
+        .style('opacity', 0);
+
+    var projection = d3.geo.mercator()
+        .center([-73.94, 40.70])
+        .scale(75000)
+        .translate([(screenwidth) / 2, (screenheight)/2 + 50]);
+    
+    var path = d3.geo.path().projection(projection);    
+    
+    var g = svg.append('g');
+
+    var color = d3.scale.pow().exponent(0.5)
+        .domain([0,5])
+        .range(['pink','red'])
+        .interpolate(d3.interpolateLab);
+
+    var quantize;
+    
+    var variable;
+
+    var legend_labels;
+
+    var legend = svg.selectAll("g.legend")
+      .data([1,2,3,4,5])
+      .enter().append("g")
+      .attr("class", "legend");
+
+    var ls_w = 20, ls_h = 20;
+
+    var bar_width = 73;
+    var bar_height = 100;
+    
+    
+function initializeMap(variable) {
+    DOMAIN = d3.extent(variable)
+    quantize = d3.scale.quantile()
+        .domain(DOMAIN)
+        .range(d3.range(5).map(function (i) { return color(i);}));
+                    
+        g.selectAll("path").data(topojson.object(nyp, nyp.objects.nypp).geometries)
+        .enter().append("path").attr('d', path)
+    
+    //Color polygons
+        .style('fill', function(d) {
+            return quantize(variable[d.id]);}).style('opacity', regularOpacity)
+
+    //Adding mouseevents
+        .on("mouseover", function(d) {
+            d3.select(this).transition().duration(150).style("opacity", 1);
+            tooltip.transition().duration(150)
+            .style("opacity", 1)
+            tooltip.html("Precinct " + nameById[d.id] + "<br>" +
+                     variable[d.id] + " crimes ")
+            .style("left", (d3.event.pageX) + "px")
+            .style("top", (d3.event.pageY -50) + "px");})
+        .on("mouseout", function() {
+            d3.select(this)
+            .transition().duration(150)
+            .style("opacity", regularOpacity);
+            tooltip.transition().duration(150)
+            .style("opacity", 0);})            
+        .on('click', clicked)
+
+    //Draw legend        
+        legend.append("rect")
+            .attr("x", 20)
+            .attr("y", function(d, i){ return height - (i*ls_h) - 2*ls_h;})
+            .attr("width", ls_w)
+            .attr("height", ls_h)
+            .style("fill", function(d, i) { return color(d-1); })
+            .style("opacity", 1);
+
+        legend.append("text")
+            .attr("x", 50)
+            .attr("y", function(d, i){ return height - (i*ls_h) - ls_h - 4;})
+            .attr('fill', 'white')
+            .attr('class',function(i){return 'leg' + i;});
+        
+  legend_labels = quantize.quantiles();
+    
+    d3.select('.leg1').text('0 - ' + d3.round(legend_labels[0]))
+    
+    d3.select('.leg2').text(d3.round(legend_labels[0]) + ' - ' + d3.round(legend_labels[1]))
+    
+    d3.select('.leg3').text(d3.round(legend_labels[1]) + ' - ' + d3.round(legend_labels[2]))
+    
+    d3.select('.leg4').text(d3.round(legend_labels[2]) + ' - ' + d3.round(legend_labels[3]))
+
+    d3.select('.leg5').text(d3.round(legend_labels[3]) + ' - ' + d3.round(DOMAIN[1]))
+
+    
+textbox.append('svg').attr('class','svg1').attr('width', bar_width).attr('height', bar_height+20)
+    .append('rect').attr('class','bar1').attr('x', 10, 'y', 20 ).attr('width', bar_width).attr('height', bar_height).style('fill', 'green');
+
+textbox.append('svg').attr('class','svg2').attr('width', bar_width).attr('height', bar_height+20)
+    .append('rect').attr('class','bar2').attr('x', 10, 'y', 20).attr('width', bar_width).attr('height', bar_height).style('fill', 'blue');
+
+textbox.append('svg').attr('class','svg3').attr('width', bar_width).attr('height', bar_height+20)
+    .append('rect').attr('class','bar3').attr('x', 10, 'y', 20).attr('width', bar_width).attr('height', bar_height).style('fill', 'red');
+
+        
+textbox.selectAll('.svg1').append('text').attr('x',40).attr('y',bar_height+15).attr('text-anchor', 'middle').text('Black').attr('fill','white')
+
+textbox.selectAll('.svg2').append('text').attr('x',40).attr('y',bar_height+15).attr('text-anchor', 'middle').text('White').attr('fill','white')
+
+textbox.selectAll('.svg3').append('text').attr('x',40).attr('y',bar_height+15).attr('text-anchor', 'middle').text('Hispanic').attr('fill','white')
+
+    }
+
+        
+        function ready(error, Map, Data){
+            // Store data from csv into arrays, whose indices match the map ids
+            Data.forEach(function(d) {    
+                totalCrimesById[d.Precinct] = +d.totCrime_2012;
+                crimes1ById[d.Precinct] = +d.G1;
+                crimes2ById[d.Precinct] = +d.G2;
+                crimes3ById[d.Precinct] = +d.G3;
+                g1BurglaryById[d.Precinct] = +d.G1_Burglary;
+                g1GlaById[d.Precinct] = +d.G1_GLA;
+                g1GlById[d.Precinct] = +d.G1_GL;
+                g1RobberyById[d.Precinct] = +d.G1_Robbery;
+                g2FelonyAssaultById[d.Precinct] = +d.G2;
+                g3MurderById[d.Precinct] = +d.G3_Murder;
+                g3RapeById[d.Precinct] = +d.G3_Rape;                
+                nameById[d.Precinct] = +d.Precinct;
+            });
+
+            nyp = Map;
+
+            // Generate the map
+            initializeMap(totalCrimesById);            
+        }
+        
+        // initialize data
+        var totalCrimesById = [];
+        var crimes1ById = [];
+        var crimes2ById = [];
+        var crimes3ById = [];
+        var g1BurglaryById = [];
+        var g1GlaById = [];
+        var g1GlById = [];
+        var g1RobberyById = [];
+        var g2FelonyAssaultById = [];
+        var g3MurderById = [];
+        var g3RapeById = [];
+        var nameById = [];
+        var DOMAIN;            
+        queue()
+        
+            .defer(d3.json,"https://dl.dropboxusercontent.com/u/60227913/nycCrimeFrisk/nypp.json")
+            .defer(d3.csv,'https://dl.dropboxusercontent.com/u/60227913/nycCrimeFrisk/SFCombinedData.csv')
+            .await(ready);
+
+        
+// Update map via dropdown            
+d3.select("#polyVars")
+    .on("change", change)
+    .selectAll("option")
+    // add options HERE
+    .data(["All crimes",
+        "Grade 1 crimes",
+        "Grade 2 crimes",
+        "Grade 3 crimes"])
+    .enter().append("option")
+    .attr("value", function(d) { return d; })
+    .text(function(d) { return d; });
+            
+            
+function change() {
+    temp = this.value      
+    // add variables HERE
+      if(temp == "Grade 1 crimes") {variable = crimes1ById}
+      else if(temp == "Grade 2 crimes") {variable = crimes2ById}
+      else if(temp == "Grade 3 crimes") {variable = crimes3ById}
+      else if(temp == "All crimes") {variable = totalCrimesById}
+    
+    DOMAIN = d3.extent(variable)
+    quantize = d3.scale.quantile()
+        .domain(DOMAIN)
+        .range(d3.range(5).map(function (i) {return color(i);}));
+    // update polygon color
+    svg.selectAll('path').style('fill', function(d) {
+        return quantize(variable[d.id]);})
+        .style('opacity', regularOpacity)
+    // update tooltip
+    .on("mouseover", function(d) {
+        d3.select(this).transition().duration(150).style("opacity", 1);
+        tooltip.transition().duration(150)
+        .style("opacity", 1)
+        tooltip.html("Precinct " + nameById[d.id] + "<br>" +
+                 + variable[d.id] + " crimes ")
+        .style("left", (d3.event.pageX) + "px")
+        .style("top", (d3.event.pageY -30) + "px");})
+    
+    legend_labels = quantize.quantiles();
+    
+    d3.select('.leg1').text('0 - ' + d3.round(legend_labels[0]))
+    
+    d3.select('.leg2').text(d3.round(legend_labels[0]) + ' - ' + d3.round(legend_labels[1]))
+    
+    d3.select('.leg3').text(d3.round(legend_labels[1]) + ' - ' + d3.round(legend_labels[2]))
+    
+    d3.select('.leg4').text(d3.round(legend_labels[2]) + ' - ' + d3.round(legend_labels[3]))
+
+    d3.select('.leg5').text(d3.round(legend_labels[3]) + ' - ' + d3.round(DOMAIN[1]))
+
+}
+ 
+function cyclePolyVariables() {
+    var v1 = crimes1ById;
+    var v2 = crimes2ById;
+    var v3 = crimes3ById;
+    
+    var qtize1 = d3.scale.quantile()
+        .domain(d3.extent(v1))
+        .range(d3.range(5).map(function (i) {return color(i);}));
+    
+    
+    var qtize2 = d3.scale.quantile()
+        .domain(d3.extent(v2))
+        .range(d3.range(5).map(function (i) {return color(i);}));
+                            
+    
+    var qtize3 = d3.scale.quantile()
+        .domain(d3.extent(v3))
+        .range(d3.range(5).map(function (i) {return color(i);}));
+                            
+                
+                
+        svg.selectAll('path')
+            .transition().duration(1000)
+                .style('fill', function(d){return qtize1(v1[d.id]);})
+            .transition().duration(1000)
+                .style('fill', function(d){return qtize2(v2[d.id]);})
+            .transition().duration(1000)
+                .style('fill', function(d){return qtize3(v3[d.id]);});   
+
+}
+    
+ d3.select('#cycle').on('click', cyclePolyVariables);    
+
+// ZOOM AND PAN
+function clicked(d){
+    var x,y,k;
+    
+    if (d && centered !== d ) {
+        var centroid = path.centroid(d);
+        x = centroid[0]
+        y = centroid[1];
+        k = 2;
+        centered = d;
+    }
+    else {
+        x = width / 2;
+        y = height / 2;
+        k = 1;
+        centered = null;
+    }
+    
+    g.selectAll('path')
+        .classed('active', centered && function(d) { return d === centered; } ) ;
+    
+    g.transition()
+        .duration(350)
+        .attr('transform', 'translate(' + width / 2 + ',' + height/2 + ')scale(' + k + ')translate(' + -x + ',' + -y + ')')
+        .style('stroke-width', 1.5/k + 'px');
+
+    // When we focus, let's remove the tool tip, but supplement with a data table at the corner
+
+    if (! d || centered === d){
+        d3.select(this)
+            .transition().duration(350)
+            .style("opacity", 1);
+        d3.select(this).transition().duration(350).style("opacity", 1);
+            textbox.transition().duration(350)
+            .style("opacity", 1);
+        textbox.selectAll('.bar1').style('fill','white');
+        textbox.selectAll('.bar2').style('fill','black');
+        textbox.selectAll('.bar3').style('fill','grey');
+
+        textbox.selectAll('.bar1').attr('height', crimes1ById[d.id]/10).attr('y',bar_height - crimes1ById[d.id]/10);
+        textbox.selectAll('.bar2').attr('height', crimes2ById[d.id]/10).attr('y',bar_height - crimes2ById[d.id]/10);
+        textbox.selectAll('.bar3').attr('height', crimes3ById[d.id]/10).attr('y',bar_height - crimes3ById[d.id]/10);
+    }
+    
+    else { // return to normal
+    d3.select(this)
+        .transition().duration(350)
+        .style("opacity", '1');
+
+    textbox.transition().duration(350)
+    .style("opacity", 0)
+    }
+    
+}       
+
+</script>

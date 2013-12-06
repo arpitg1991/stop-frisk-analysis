@@ -17,26 +17,78 @@ path {
 .button {color:black; 
          font-size: small;
          position : fixed;
-         width : 150px;
+
     }
     #button_totalCrimes { 
         top: 0px;
         left: 0px;
+        width: 600px;
+        height: 20px;
     }         
     #button_grade1 { 
-        top: 0px;
+        top: 20px;
+        left: 0;
+        width: 200px;
+                height: 20px;
+    }
+    
+    #button_g1Burglary {
+        top: 40px;
+        left: 0;
+        width: 50 + 'px';
+                height: 20px;
+    }
+    #button_g1GLA {
+        top: 40px;
+        left: 50 + 'px';
+        width: 50 + 'px';
+                height: 20px;
+    }    
+    #button_g1GL {
+        top: 40px;
+        left: 100px;
+        width: 50px;
+                height: 20px;
+    }    
+    
+    #button_g1Robbery {
+        top: 40px;
         left: 150px;
-    }         
+        width: 50px;
+                height: 20px;
+    }    
+    
     #button_grade2 { 
-        top: 0px;
-        left: 300px;
+        top: 20px;
+        left: 200px;
+        width: 200px;
+        height: 40px;
+        
     }         
+    
+    
+
+    
     #button_grade3 { 
-        top: 0px;
-        left: 450px;
+        top: 20px;
+        left: 400px;
+        width: 200px;
+                height: 20px;
     }         
      
-
+    #button_g3Murder {
+        top: 40px;
+        left: 400px;
+        width: 100px;
+                height: 20px;
+    }
+    
+    #button_g3Rape {
+        top: 40px;
+        left: 500px;
+        width: 100px;
+                height: 20px;
+    }    
     
     
 div.tooltip {   
@@ -72,6 +124,8 @@ form {
     <button id = "button_grade1" class = 'button'>Grade 1</button>
     <button id = "button_grade2" class = 'button'>Grade 2</button>
     <button id = "button_grade3" class = 'button'>Grade 3</button>
+    <button id = 'button_g1Burglary' class = 'button'>Burglary</button>
+    
 </div>
     <script src="http://d3js.org/d3.v3.min.js"></script>
     <script src="http://d3js.org/queue.v1.min.js"></script>
@@ -160,13 +214,20 @@ form {
         // process the data    
             // Store data from csv into arrays, whose indices match the map ids
             Data.forEach(function(d) {
-                totalCrimesById[d.Precinct] = +d.Total;
-                crimes1ById[d.Precinct] = +d.Grade1;
-                crimes2ById[d.Precinct] = +d.Grade2;
-                crimes3ById[d.Precinct] = +d.Grade3;
+                totalCrimesById[d.Precinct] = +d.total;
+                crimes1ById[d.Precinct] = +d.G1;
+                crimes2ById[d.Precinct] = +d.G2;
+                crimes3ById[d.Precinct] = +d.G3;
+                g1BurglaryById[d.Precinct] = +d.G1_Burglary;
+                g1GlaById[d.Precinct] = +d.G1_GLA;
+                g1GlById[d.Precinct] = +d.G1_GL;
+                g1RobberyById[d.Precinct] = +d.G1_Robbery;
+                g2FelonyAssaultById[d.Precinct] = +d.G2;
+                g3MurderById[d.Precinct] = +d.G3_Murder;
+                g3RapeById[d.Precinct] = +d.G3_Rape;                
                 nameById[d.Precinct] = +d.Precinct;
             });
-                    
+                  
             nyp = Map;
         // Generate the map
                 initializeMap(totalCrimesById);
@@ -176,12 +237,20 @@ form {
         var crimes1ById = [];
         var crimes2ById = [];
         var crimes3ById = [];
+        var g1BurglaryById = [];
+        var g1GlaById = [];
+        var g1GlById = [];
+        var g1RobberyById = [];
+        var g2FelonyAssaultById = [];
+        var g3MurderById = [];
+        var g3RapeById = [];
         var nameById = [];
         var DOMAIN;
             
         queue()
             .defer(d3.json,"https://dl.dropboxusercontent.com/u/60227913/nycCrimeFrisk/nypp.json")
-            .defer(d3.csv,"https://dl.dropboxusercontent.com/u/60227913/nycCrimeFrisk/crimeByPP2012.csv")
+.defer(d3.csv,"data/crime2012.csv")
+              //.defer(d3.csv,"https://dl.dropboxusercontent.com/u/60227913/nycCrimeFrisk/crimeByPP2012.csv")
             .await(ready);
 
 // ASSIGN FUNCTIONS TO BUTTONS
