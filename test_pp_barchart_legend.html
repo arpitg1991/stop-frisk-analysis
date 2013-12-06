@@ -74,6 +74,7 @@ li.key {
 
 <form>
   <select id="polyVars"></select><br>
+<!--  <button id = "cycle" class = 'button'>Loop Var</button> -->
 </form>
     
 <script src="http://d3js.org/d3.v3.min.js"></script>
@@ -214,7 +215,7 @@ textbox.selectAll('.svg3').append('text').attr('x',40).attr('y',bar_height+15).a
         function ready(error, Map, Data){
             // Store data from csv into arrays, whose indices match the map ids
             Data.forEach(function(d) {    
-                totalCrimesById[d.Precinct] = +d.total;
+                totalCrimesById[d.Precinct] = +d.totCrime_2012;
                 crimes1ById[d.Precinct] = +d.G1;
                 crimes2ById[d.Precinct] = +d.G2;
                 crimes3ById[d.Precinct] = +d.G3;
@@ -249,8 +250,9 @@ textbox.selectAll('.svg3').append('text').attr('x',40).attr('y',bar_height+15).a
         var nameById = [];
         var DOMAIN;            
         queue()
+        
             .defer(d3.json,"https://dl.dropboxusercontent.com/u/60227913/nycCrimeFrisk/nypp.json")
-            .defer(d3.csv,"data/crime2012.csv")
+            .defer(d3.csv,'https://dl.dropboxusercontent.com/u/60227913/nycCrimeFrisk/SFCombinedData.csv')
             .await(ready);
 
         
@@ -307,7 +309,40 @@ function change() {
     d3.select('.leg5').text(d3.round(legend_labels[3]) + ' - ' + d3.round(DOMAIN[1]))
 
 }
+ 
+function cyclePolyVariables() {
+    var v1 = crimes1ById;
+    var v2 = crimes2ById;
+    var v3 = crimes3ById;
     
+    var qtize1 = d3.scale.quantile()
+        .domain(d3.extent(v1))
+        .range(d3.range(5).map(function (i) {return color(i);}));
+    
+    
+    var qtize2 = d3.scale.quantile()
+        .domain(d3.extent(v2))
+        .range(d3.range(5).map(function (i) {return color(i);}));
+                            
+    
+    var qtize3 = d3.scale.quantile()
+        .domain(d3.extent(v3))
+        .range(d3.range(5).map(function (i) {return color(i);}));
+                            
+                
+                
+        svg.selectAll('path')
+            .transition().duration(1000)
+                .style('fill', function(d){return qtize1(v1[d.id]);})
+            .transition().duration(1000)
+                .style('fill', function(d){return qtize2(v2[d.id]);})
+            .transition().duration(1000)
+                .style('fill', function(d){return qtize3(v3[d.id]);});   
+
+}
+    
+ d3.select('#cycle').on('click', cyclePolyVariables);    
+
 // ZOOM AND PAN
 function clicked(d){
     var x,y,k;
