@@ -176,7 +176,7 @@ div.textbox {
         var DOMAIN;            
         queue()
             .defer(d3.json,"https://dl.dropboxusercontent.com/u/60227913/nycCrimeFrisk/nypp.json")
-            .defer(d3.csv,"data/crime2012.csv")
+            .defer(d3.csv,"https://dl.dropboxusercontent.com/u/60227913/nycCrimeFrisk/crime2012.csv")
             .await(ready);
 
         

@@ -71,6 +71,7 @@ li.key {
     
 </style>
 <body>
+
 <form>
   <select id="polyVars"></select><br>
 </form>
@@ -80,121 +81,122 @@ li.key {
 <script type="text/javascript" src="http://d3js.org/topojson.v0.min.js"></script>
 
 <script>
-    var screenwidth = 900,
-        screenheight = 800;       
+    var screenwidth = 1024,
+        screenheight = 768;       
 
-        var regularOpacity = 0.6
-        
-        var color = d3.scale.pow().exponent(0.5)
-            .domain([0,5])
-            .range(['pink','red'])
-            .interpolate(d3.interpolateLab);
+    var regularOpacity = 0.6
+            
+    var margin = {top: 0, right: 0, bottom: 0, left: 0},
+        width = screenwidth - margin.left - margin.right,
+        height = screenheight - margin.top - margin.bottom,
+        centered = null;
+    
+    var svg = d3.select("body").append("svg")
+        .attr("width", screenwidth + margin.left + margin.right)
+        .attr("height", screenheight + margin.top + margin.bottom)        
+    
+    var tooltip = d3.select("body").append("div")   
+        .attr("class", "tooltip")               
+        .style("opacity", 0.5);
+    
+    var textbox = d3.select('body').append('div')
+        .attr('class', 'textbox')
+        .style('opacity', 0);
 
-        var quantize;
-        
-        var margin = {top: 0, right: 0, bottom: 0, left: 0},
-            width = screenwidth - margin.left - margin.right,
-            height = screenheight - margin.top - margin.bottom,
-            centered = null;
-        
-        var svg = d3.select("body").append("svg")
-            .attr("width", screenwidth + margin.left + margin.right)
-            .attr("height", screenheight + margin.top + margin.bottom)        
-        
-        var div = d3.select("body").append("div")   
-            .attr("class", "tooltip")               
-            .style("opacity", 0.5);
-        
-        var textbox = d3.select('body').append('div')
-            .attr('class', 'textbox')
-            .style('opacity', 0);
+    var projection = d3.geo.mercator()
+        .center([-73.94, 40.70])
+        .scale(75000)
+        .translate([(screenwidth) / 2, (screenheight)/2 + 50]);
+    
+    var path = d3.geo.path().projection(projection);    
+    
+    var g = svg.append('g');
 
+    var color = d3.scale.pow().exponent(0.5)
+        .domain([0,5])
+        .range(['pink','red'])
+        .interpolate(d3.interpolateLab);
+
+    var quantize;
     
-        var projection = d3.geo.mercator()
-            .center([-73.94, 40.70])
-            .scale(75000)
-            .translate([(screenwidth) / 2, (screenheight)/2 + 50]);
-        
-        var path = d3.geo.path()
-                .projection(projection);    
-        
-        var g = svg.append('g');
-        
-        var variable;
-    
-      var legend_labels = ["< 50", "50+", "150+", "350+", "750+", "> 1500"];
-    
+    var variable;
+
+    var legend_labels = ["< 50", "50+", "150+", "350+", "750+", "> 1500"];
+
     var legend = svg.selectAll("g.legend")
-  .data([0,1,2,3,4])
-  .enter().append("g")
-  .attr("class", "legend");
-var ls_w = 20, ls_h = 20;
-    
+      .data([0,1,2,3,4])
+      .enter().append("g")
+      .attr("class", "legend");
+
+    var ls_w = 20, ls_h = 20;
+
     var bar_width = 73;
     var bar_height = 100;
     
     
-        function initializeMap(variable) {
-            DOMAIN = d3.extent(variable)
-            quantize = d3.scale.quantile()
-                .domain(DOMAIN)
-                .range(d3.range(5).map(function (i) { return color(i);}));
-                        
-            g.selectAll("path")
-                .data(topojson.object(nyp, nyp.objects.nypp).geometries)
-            .enter().append("path")
-            .attr('d', path)
-            //Color polygons
-            .style('fill', function(d) {
-                return quantize(variable[d.id]);}).style('opacity', regularOpacity)
-                        //Adding mouseevents
-            .on("mouseover", function(d) {
-                d3.select(this).transition().duration(150).style("opacity", 1);
-                div.transition().duration(150)
-                .style("opacity", 1)
-                div.html("Precinct " + nameById[d.id] + "<br>" +
-                         variable[d.id] + " crimes ")
-                .style("left", (d3.event.pageX) + "px")
-                .style("top", (d3.event.pageY -50) + "px");})
-            .on("mouseout", function() {
-                d3.select(this)
-                .transition().duration(150)
-                .style("opacity", regularOpacity);
-                div.transition().duration(150)
-                .style("opacity", 0);})            
-            .on('click', clicked)
-            
-             legend.append("rect")
-  .attr("x", 20)
-  .attr("y", function(d, i){ return height - (i*ls_h) - 2*ls_h;})
-  .attr("width", ls_w)
-  .attr("height", ls_h)
-  .style("fill", function(d, i) { return color(d); })
-  .style("opacity", 0.8);
-
-  legend.append("text")
-  .attr("x", 50)
-  .attr("y", function(d, i){ return height - (i*ls_h) - ls_h - 4;})
-  .text(function(d, i){ return legend_labels[i]; })
-  .attr('fill', 'white');
+function initializeMap(variable) {
+    DOMAIN = d3.extent(variable)
+    quantize = d3.scale.quantile()
+        .domain(DOMAIN)
+        .range(d3.range(5).map(function (i) { return color(i);}));
+                    
+        g.selectAll("path").data(topojson.object(nyp, nyp.objects.nypp).geometries)
+        .enter().append("path").attr('d', path)
     
-textbox.append('svg').attr('class','svg1').attr('width', bar_width).attr('height', bar_height+15)
-        .append('rect').attr('class','bar1').attr('x', 10, 'y', 20 ).attr('width', bar_width).attr('height', bar_height).style('fill', 'green');
+    //Color polygons
+        .style('fill', function(d) {
+            return quantize(variable[d.id]);}).style('opacity', regularOpacity)
 
-textbox.append('svg').attr('class','svg2').attr('width', bar_width).attr('height', bar_height+15)
-        .append('rect').attr('class','bar2').attr('x', 10, 'y', 20).attr('width', bar_width).attr('height', bar_height).style('fill', 'blue');
+    //Adding mouseevents
+        .on("mouseover", function(d) {
+            d3.select(this).transition().duration(150).style("opacity", 1);
+            tooltip.transition().duration(150)
+            .style("opacity", 1)
+            tooltip.html("Precinct " + nameById[d.id] + "<br>" +
+                     variable[d.id] + " crimes ")
+            .style("left", (d3.event.pageX) + "px")
+            .style("top", (d3.event.pageY -50) + "px");})
+        .on("mouseout", function() {
+            d3.select(this)
+            .transition().duration(150)
+            .style("opacity", regularOpacity);
+            tooltip.transition().duration(150)
+            .style("opacity", 0);})            
+        .on('click', clicked)
+
+    //Draw legend        
+        legend.append("rect")
+            .attr("x", 20)
+            .attr("y", function(d, i){ return height - (i*ls_h) - 2*ls_h;})
+            .attr("width", ls_w)
+            .attr("height", ls_h)
+            .style("fill", function(d, i) { return color(d); })
+            .style("opacity", 0.8);
+
+        legend.append("text")
+            .attr("x", 50)
+            .attr("y", function(d, i){ return height - (i*ls_h) - ls_h - 4;})
+            .text(function(d, i){ return legend_labels[i]; })
+            .attr('fill', 'white');
+
     
-textbox.append('svg').attr('class','svg3').attr('width', bar_width).attr('height', bar_height+15)
-        .append('rect').attr('class','bar3').attr('x', 10, 'y', 20).attr('width', bar_width).attr('height', bar_height).style('fill', 'red');
+textbox.append('svg').attr('class','svg1').attr('width', bar_width).attr('height', bar_height+20)
+    .append('rect').attr('class','bar1').attr('x', 10, 'y', 20 ).attr('width', bar_width).attr('height', bar_height).style('fill', 'green');
 
-            
+textbox.append('svg').attr('class','svg2').attr('width', bar_width).attr('height', bar_height+20)
+    .append('rect').attr('class','bar2').attr('x', 10, 'y', 20).attr('width', bar_width).attr('height', bar_height).style('fill', 'blue');
+
+textbox.append('svg').attr('class','svg3').attr('width', bar_width).attr('height', bar_height+20)
+    .append('rect').attr('class','bar3').attr('x', 10, 'y', 20).attr('width', bar_width).attr('height', bar_height).style('fill', 'red');
+
+        
 textbox.selectAll('.svg1').append('text').attr('x',40).attr('y',bar_height+15).attr('text-anchor', 'middle').text('Black').attr('fill','white')
 
 textbox.selectAll('.svg2').append('text').attr('x',40).attr('y',bar_height+15).attr('text-anchor', 'middle').text('White').attr('fill','white')
 
 textbox.selectAll('.svg3').append('text').attr('x',40).attr('y',bar_height+15).attr('text-anchor', 'middle').text('Hispanic').attr('fill','white')
 
-        }
+    }
 
         
         function ready(error, Map, Data){
@@ -273,9 +275,9 @@ function change() {
     // update tooltip
     .on("mouseover", function(d) {
         d3.select(this).transition().duration(150).style("opacity", 1);
-        div.transition().duration(150)
+        tooltip.transition().duration(150)
         .style("opacity", 1)
-        div.html("Precinct " + nameById[d.id] + "<br>" +
+        tooltip.html("Precinct " + nameById[d.id] + "<br>" +
                  + variable[d.id] + " crimes ")
         .style("left", (d3.event.pageX) + "px")
         .style("top", (d3.event.pageY -30) + "px");})
