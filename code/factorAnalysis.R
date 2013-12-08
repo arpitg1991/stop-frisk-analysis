@@ -108,6 +108,10 @@ raceLoadings <- sqldf('select distinct * ,count(*) as stops from raceLoadings gr
 write.csv(raceLoadings,file='data/raceLoadings.csv',row.names=FALSE)
 write.csv(noRaceLoadings,file='data/noRaceLoadings.csv',row.names=FALSE)
 ###############################################################################
+setwd(dir = '~/stop-frisk-analysis/')
+
+
+
 require(sqldf)
 load('data/frisk.RData')
 library('psych')

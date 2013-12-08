@@ -7,7 +7,7 @@
 setwd(dir = '~/stop-frisk-analysis/')
 
 require(foreign)
-df <- as.data.frame(read.spss('data/raw/2010.por'),stringsAsFactors=F)
+df <- as.data.frame(read.spss('data/raw/2012.por'),stringsAsFactors=F)
 
 desc <- read.csv('data/detailcm.csv')
 
@@ -54,4 +54,4 @@ df$heightInches <- as.integer(df$HT_FEET) * 12 + as.integer(df$HT_IN)
 df$weight <- as.integer(df$WEIGHT)
 
 
-save(df, file = 'data/cleanedData2010.Rdata')
+save(df, file = 'data/cleanedData2012.Rdata')
