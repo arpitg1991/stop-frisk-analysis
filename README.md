@@ -4,10 +4,9 @@ stop-frisk-analysis
 Data analysis on nyclu stop and frisk data
 
 
-
-
 Raw data
 --------------
+For raw NYC stop-frisk data:
 http://www.nyc.gov/html/nypd/html/analysis_and_planning/stop_question_and_frisk_report.shtml
 
 Published results
