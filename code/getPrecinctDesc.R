@@ -1,4 +1,8 @@
-  
+### This is used to scrape the police descriptions on website for our map
+
+
+
+# Below function taken from http://www.r-bloggers.com/htmltotext-extracting-text-from-html-via-xpath/
   htmlToText <- function(input, ...) {
     ###---PACKAGES ---###
     require(RCurl)

@@ -1,8 +1,5 @@
-
-### Once you initialize your repositor in line 5, this script will create and save the Rdata with cleaned 2012 data.
-
-
-
+### Once you initialize your repository in line 5, this script will create and save the Rdata with cleaned 2012 data.
+# Can be changed for other years as well
 # set directory to your repository
 setwd(dir = '~/stop-frisk-analysis/')
 
