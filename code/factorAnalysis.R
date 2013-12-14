@@ -1,3 +1,5 @@
+frisk <- read.csv(file = 'data/Frisk2012-CensusTract-ACS.csv',header = TRUE, sep = ',',stringsAsFactors = FALSE)
+save(frisk,file='data/frisk.RData')
 load('data/frisk.RData')
 library('psych')
 library('GPArotation')
@@ -116,15 +118,16 @@ require(sqldf)
 load('data/frisk.RData')
 library('psych')
 library('GPArotation')
-friskACS <- frisk[,c(132,193:440)]
+friskACS <- frisk[,c(132,193:440,3)]
 friskACS <-  sqldf('select * , count(*) as noOfStops from friskACS group by BoroCT2010')                        
-friskACSfactorise <- friskACS[,c(2:250)]                        
+friskACSfactorise <- friskACS[,c(2:251)]                        
 #friskACSfactorise <- friskACS[,c(1,seq(14,74,by=2),92,102,106,seq(169,179,by=2),seq(214,242,by=2))]
 #friskACSfactorise <- as.data.frame(scale(friskACSfactorise))
 #friskACSfactorise1 <- friskACSfactorise[,c(seq(15,23,by=2),seq(29,37,by=2),seq(91,99,by=2),seq(111,121,by=2),103,168,172,176,178,214,221,seq(223,239,by=4))]                        
 #friskACSfactorise1 <- friskACS[,c(1,16,18,22,30,seq(48,56,by=2),58,64,66,68,74,92,106,108,seq(76,90,by=2),167,171,175,179,215,216:220,222,250)]                        
-friskACSfactorise1 <- friskACS[,c(1,16,18,22,30,seq(48,56,by=2),58,64,66,68,74,92,106,108,seq(76,90,by=2),167,171,175,179,215,222,250)]                        
-friskACSfactorise2 <- friskACSfactorise1[rowSums(is.na(friskACSfactorise1)) <1, ]
+friskACSfactorise1 <- friskACS[,c(1,2,133,16,18,20,22,24,26,28,30,seq(48,56,by=2),58,64,66,68,74,92,106,108,seq(76,90,by=2),167,171,175,179,215,222,250,251)]                        
+friskACScollapsed <- sqldf('select *,ACS_p_american_indian+ACS_p_asian+ACS_p_hawaiian+ACS_p_other_race as ACS_p_otherRaces,ACS_p_edu_grad_HS+ACS_p_edu_associate_degree as someEdu,ACS_p_edu_bachelor_degree+ACS_p_edu_graduate_degree as collegeDegree from friskACSfactorise1')
+friskACSfactorise2 <- friskACScollapsed[rowSums(is.na(friskACScollapsed)) <1, ]
 friskACSfactorise3 <- as.data.frame(friskACSfactorise2[,1])
 friskACSfactorise2 <- friskACSfactorise2[,c(2:ncol(friskACSfactorise2))]
 #friskACSfactorise1 <- friskACSfactorise1[c(2:nrow(friskACSfactorise1)),]
@@ -132,10 +135,11 @@ friskACSfactorise2 <- friskACSfactorise2[,c(2:ncol(friskACSfactorise2))]
 fa.parallel(friskACSfactorise2[,c(2,4,16,17,27,28,29,30,32)])
 solution <- factanal(x = friskACSfactorise2[,c(6,2,21,22,40,41,42,43,44,57)], factors =6 , rotation = "varimax", fm = "wls",max.iter = 500)                        
 solution <- factanal(x = friskACSfactorise2[,c(6,2,21,22,40,41,42,43,44,57)], factors =6 , rotation = "varimax", fm = "wls",max.iter = 500)                        
-solution <- factanal(x = friskACSfactorise2[,c(2,3,4,6,7,10,15,16,17,30)], factors =3, rotation = "varimax", fm = "wls",max.iter = 500)                        
-solution <- fa(r = friskACSfactorise2[,c(2,3,4,31)], nfactors = 1, rotate = "varimax", fm = "minres",max.iter = 500)
+solution <- factanal(x = friskACSfactorise2[,c(2,3,4,6,7,10,15,16,17,30,32)], factors =5, rotation = "varimax", fm = "wls",max.iter = 500)                        
+solution <- fa(r = friskACSfactorise2[,c(2,3,4,6,7,10,15,16,17,30,31)], nfactors = 3, rotate = "varimax", fm = "minres",max.iter = 500)
 solution[37]
 save(solution,file = 'data/factorAnalysis1.RData')
+write.csv(friskACSfactorise2,file='data/acsTract.csv',row.names=FALSE)
 #####################################################################################
 stopByrace <-  sqldf('select distinct BoroCT2010,race_1,count(*) as count from frisk group by BoroCT2010,race_1')
 popByRace <- sqldf('select distinct BoroCT2010,ACS_p_white,ACS_p_black,ACS_p_hispanic,ACS_p_american_indian+ACS_p_asian+ACS_p_hawaiian+ACS_p_hawaiian as other from frisk group by boroCT2010')                        
@@ -144,4 +148,92 @@ popByRace <- popByRace[rowSums(is.na(popByRace)) <1,]
 stopByrace <- stopByrace[rowSums(is.na(stopByrace))< 1, ]
 write.csv(stopByrace,file='data/stopByrace.csv',row.names =FALSE)
 write.csv(popByRace,file='data/popByRace.csv',row.names=FALSE)
-                        
+######
+require(sqldf)
+load('data/frisk.RData')
+library('psych')
+library('GPArotation')
+friskACS <- frisk[,c(132,193:440,3)]
+friskACS <-  sqldf('select distinct * , count(*) as noOfStops from friskACS group by BoroCT2010')                        
+friskACSfactorise1 <- friskACS[,c(1,2,133,16,18,20,22,24,26,28,30,seq(48,56,by=2),58,64,66,68,74,92,106,108,seq(76,90,by=2),167,171,175,179,215,222,250,251)]                        
+friskACSfactorise1 <- friskACSfactorise1[rowSums(is.na(friskACSfactorise1)) <1, ]
+friskACScollapsed <- sqldf('select *,ACS_p_american_indian+ACS_p_asian+ACS_p_hawaiian+ACS_p_other_race as ACS_p_otherRaces,ACS_p_edu_grad_HS+ACS_p_edu_associate_degree as someEdu,ACS_p_edu_bachelor_degree+ACS_p_edu_graduate_degree as collegeDegree from friskACSfactorise1')
+
+ind = c(2:38,40:43)
+friskACScollapsed[,43]<- as.numeric(friskACScollapsed[,43])
+friskACScollapsed[,41]<- as.numeric(friskACScollapsed[,41])
+friskACScollapsed[,42]<- as.numeric(friskACScollapsed[,42])
+
+for(i in 1:40){
+  friskACScollapsed[,ind[i]] <- scale(friskACScollapsed[,ind[i]])
+  
+}
+for(i in 1:40){
+  friskACScollapsed[,ind[i]] <- friskACScollapsed[,ind[i]] * friskACScollapsed[,2]
+  
+}
+names(friskACScollapsed)
+save(friskACScollapsed,file='data/normalisedfriskData.RData')
+write.csv(friskACScollapsed,file='data/acsTract.csv')
+solution <- fa(r = friskACScollapsed[,c(5,11,41,42,43,22,17,37,38,23)], nfactors = 4, rotate = "varimax", fm = "minres",max.iter = 500)
+# names(friskACScollapsed)
+#######################
+data <- read.csv(file='data/kmeansData.csv',header = TRUE,stringsAsFactors = FALSE)
+labels <- read.csv(file='data/kmeans.csv',header=TRUE,stringsAsFactors = FALSE)
+#pct <- sqldf('select distinct PCT from friskACScollapsed2 order by PCT')
+pct <- sqldf('select distinct PCT from stopsTractPCT order by PCT')
+labelledData <- as.data.frame(cbind(pct[,1],data[,2],data[,3],data[,4],labels[,2]))
+colnames(labelledData) <- c('PCT','blackStopRatio','HispanicStopRatio','label')
+write.csv(labelledData,file='../Downloads/stop-frisk-analysis/data/kmeans/K4PrecinctStopRatio.csv')
+library(scatterplot3d)
+labelledData[,5] <- labelledData[,5] + 1
+plot(data[,2],data[,4],col = c("red","blue","green","black")[labelledData[,5]])
+plot(labelledData[,2],data[,3],col = c("violet","skyblue3","orange","red","blue","green","black","yellow","pink","gainsboro")[labelledData[,4]])
+
+#citizenIncomeStopsCrime no useful
+#do blackCrime,HispanicCrime,stopCrime again
+#stopCrime use K = 3
+#blackCrime use K = 3
+
+#########
+crimeData <- read.table('data/SFCombinedData.csv',header=TRUE,stringsAsFactors=FALSE,sep=',')
+crimeData <- as.data.frame(cbind(crimeData[,1],crimeData[,55]))
+#crimeData[,2] = scale(crimeData[,2])
+colnames(crimeData) <- c('PCT','crimeRate')
+friskACScollapsed1 <- friskACScollapsed
+friskACScollapsed2 <- merge(x = friskACScollapsed1,y = crimeData,by.x ='PCT',by.y='PCT')
+write.csv(friskACScollapsed2,file='data/acsTract.csv',row.names=FALSE)
+# stops profiling
+##################
+##################
+stopsData <- read.table('data/stopsProfiling.csv',header = TRUE,sep = '\t')
+tractPCT <- sqldf('select distinct BoroCT2010,PCT from frisk')
+stopsTractPCT <- merge(x = stopsData,y =tractPCT,by.x = 'BoroCT2010',by.y='BoroCT2010')
+stopsTractPCT <- merge(x = stopsTractPCT, y = crimeData,by.x = 'PCT',by.y = 'PCT')
+stopsstops <- sqldf('select PCT, count(*) as count, sum(white),sum(black),sum(hispanic),sum(other),sum(crimeRate) from stopsTractPCT group by PCT')
+stopsstops1 <- stopsstops
+stopsstops1[,3] <- stopsstops[,3]/stopsstops[,2]
+stopsstops1[,4] <- stopsstops[,4]/stopsstops[,2]
+stopsstops1[,5] <- stopsstops[,5]/stopsstops[,2]
+stopsstops1[,6] <- stopsstops[,6]/stopsstops[,2]
+stopsstops1[,7] <- stopsstops[,7]/stopsstops[,2]
+stopsTractPCT[,4] <- stopsTractPCT[,4]/max(stopsTractPCT[,4])
+stopsTractPCT[,5] <- stopsTractPCT[,5]/max(stopsTractPCT[,5])
+stopsTractPCT[6] <- stopsTractPCT[,6]/max(stopsTractPCT[,6])
+stopsTractPCT[,7] <- stopsTractPCT[,7]/max(stopsTractPCT[,7])
+write.table(stopsstops1,file = 'data/stopTractPCT2.csv',row.names=FALSE,col.names=FALSE,sep=',')
+
+write.csv(stopsTractPCT,file = 'data/stopTractPCT1.csv',row.names=FALSE)
+#######################################################
+K1 <- read.table('../Downloads/stop-frisk-analysis/data/kmeans/K3PrecinctNonRace.csv',header = TRUE, sep = ',')
+K2 <- read.table('../Downloads/stop-frisk-analysis/data/kmeans/KMeansRace.csv',header = TRUE, sep = ',')
+K11 <- K1[,c(1,6)]
+K22 <- K2[,c(1,5)]
+colnames(K11) <- c('PCT','label')
+colnames(K22) <- c('PCT','label')
+frisk <- friskACScollapsed2[,c(1,6,12,5,23,37,44)]
+colnames(frisk) <- c ('PCT','black','hispanic','other','poverty','perCapitaIncome','crimeRate')
+kmeansNonRace <- merge(x = K11,y=frisk,by.x='PCT',by.y='PCT')
+kmeansRace <- merge(x = K22,y=frisk,by.x='PCT',by.y='PCT')
+kmeansRace1 <- sqldf('select label , AVG(black),AVG(hispanic),AVG(other) from kmeansRace group by label')
+kmeansRace2 <- sqldf('select label , AVG(black),AVG(hispanic),AVG(other) from kmeansNonRace group by label')
