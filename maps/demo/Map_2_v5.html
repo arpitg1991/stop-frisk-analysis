@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font: 10px sans-serif;
+  background-color:black;
+}
+    
+path {
+        stroke: black;
+        stroke-width: 0.001px;
+    }
+
+    
+
+.button {color:black; 
+         font-size: small;
+         position : absolute;
+         opacity : 1;
+    }
+    
+    #timebutton{
+        top: 10px;
+        left: 30px;
+        width: 50px;
+        height: 20px;
+    }           
+    
+.form {  position: absolute;
+  padding: 10px;
+  font-size: large;
+  width:20px;
+    }
+    
+    #mainvariable {
+        top:10px;
+        left:10px;
+        width:50px;
+        height:20px;
+    }
+    #barvariables { 
+        top: 10px;
+        left: 10px;
+        width: 50px;
+        height: 20px;
+    }         
+    
+    
+div.tooltip {   
+  position: absolute;           
+  text-align: center;           
+  width: 140px;                  
+  height: 30px;                 
+  padding: 10px;             
+  font-size: 12px;     
+  background-color: rgba(28, 28, 28, 0.6);
+  border: 1.5px;    
+  vertical-align: middle;
+  border-radius: 20px;           
+  pointer-events: none; 
+  color : white;
+  white-space : pre;
+}     
+    
+div.textbox {
+  position: fixed;   
+  top: 50px;
+  left: 15px;
+  text-align: left;           
+  width: 320px;                  
+  height: 150px;                 
+  padding: 10px;             
+  font-size: 12px;     
+  background-color: rgba(96, 96, 96, 0.6);
+  border: 1.5px;    
+  vertical-align: middle;
+  border-radius: 20px;           
+  pointer-events: none; 
+  color : white;
+  white-space : pre;
+}   
+    
+div.datatextbox {
+  position: fixed;   
+  top: 230px;
+  left: 15px;
+  text-align: left;           
+  width: 320px;                  
+  height: 250px;                 
+  padding: 10px;             
+  font-size: 12px;     
+  background-color: rgba(96, 96, 96, 0.6);
+  border: 1.5px;    
+  vertical-align: middle;
+  border-radius: 20px;           
+  pointer-events: none; 
+  color : white;
+  white-space : pre;
+}     
+    
+div.ppdesc {
+  position: fixed;   
+  top: 200px;
+  right: 15px;
+  text-align: left;           
+  width: 280px;                  
+  height: 270px;                 
+  padding: 10px;             
+  font-size: 12px;     
+  background-color: rgba(96, 96, 96, 0.6);
+  border: 1.5px;    
+  vertical-align: middle;
+  border-radius: 20px;           
+  pointer-events: none; 
+  color : white;
+  white-space : pre;
+  word-wrap : break-word;
+}     
+    
+    
+.legend {
+  font-size: 12px;
+}
+    
+</style>
+<body>
+    
+    <form>
+<div id="option">
+    <input name="updateButton" 
+                 type="button" 
+                value="Monthly trend of stops" 
+                onclick="timeanalysis()"
+                float = 'left'/>   <input name="updateButton" 
+                 type="button" 
+                value="Annual trend of stops" 
+                onclick="timeanalysis2()"
+                float = 'left'/>
+       <input name="updateButton" 
+                 type="button" 
+                value="K-means demo" 
+                onclick="kanalysis()"
+                float = 'left'/>
+<font color = 'white'>Choose chloropleth:<select id="polyVars"></select>
+Choose theme:<select id="barVar1" style="width:8%;max-width:80%;"></select>
+</font>    
+    
+    
+    
+ </div>    
+</form>        
+
+ 
+
+    
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script type="text/javascript" src="http://d3js.org/topojson.v0.min.js"></script>
+
+<script>
+    var screenwidth = 1280,
+        screenheight = 768;       
+
+    var regularOpacity = 0.6
+            
+    var margin = {top: 0, right: 0, bottom: 0, left: 0},
+        width = screenwidth - margin.left - margin.right,
+        height = screenheight - margin.top - margin.bottom,
+        centered = null;
+    
+    var svg = d3.select("body").append("svg")
+        .attr("width", screenwidth + margin.left + margin.right)
+        .attr("height", screenheight + margin.top + margin.bottom)        
+    
+    var tooltip = d3.select("body").append("div")   
+        .attr("class", "tooltip")               
+        .style("opacity", 0);
+    
+    var textbox = d3.select('body').append('div')
+        .attr('class', 'textbox')
+        .style('opacity', 0);
+
+    var datatextbox = d3.select('body').append('div')
+            .attr('class', 'datatextbox')
+            .style('opacity', 0);    
+
+    var ppdesc = d3.select('body').append('div')
+            .attr('class', 'ppdesc')
+            .style('opacity', 0);    
+    
+    var projection = d3.geo.mercator()
+        .center([-73.94, 40.70])
+        .scale(70000)
+        .translate([(screenwidth) / 2 + 250, (screenheight)/2 - 50]);
+    
+    var path = d3.geo.path().projection(projection);    
+    
+    var g = svg.append('g');
+
+    var color = d3.scale.pow().exponent(0.5)
+        .domain([0,5])
+        .range(['pink','red'])
+        .interpolate(d3.interpolateLab);
+    var color_time = d3.scale.linear()
+        .domain([0,5])
+        .range(['white','navy'])
+        .interpolate(d3.interpolateLab);
+
+    var quantize;
+    
+    var variable,
+        barVariable1,
+        barVariable2,
+        barVariable3;
+
+    var barTrigger; 
+    var legend_labels;
+
+    var legend = svg.selectAll("g.legend")
+      .data([1,2,3,4,5])
+      .enter().append("g")
+      .attr("class", "legend");
+
+    var ls_w = 20, ls_h = 20;
+
+    var bar_width = 100;
+    var bar_height = 100;
+    var legendHeight = screenheight-100;
+    
+    var bar1label,
+        bar2label,
+        bar3label;
+    
+    var info;
+    var temp,
+        temp2;
+    
+    var timeDuration = 1200;
+    
+    var triggerK = 0;
+    var Desc;
+    
+    var cluster1 = 'Biased';
+    var cluster2 = 'Borderline';
+    var cluster3 = 'Unbiased';
+
+    var clusterNames = [cluster1, cluster2, cluster3];
+    
+function initializeMap(variable) {
+    triggerK = 1;    
+    DOMAIN = d3.extent(variable)
+    quantize = d3.scale.quantile()
+        .domain(DOMAIN)
+        .range(d3.range(5).map(function (i) { return color(i);}));
+                    
+        g.selectAll("path").data(topojson.object(nyp, nyp.objects.nypp).geometries)
+        .enter().append("path").attr('d', path)
+    
+    //Color polygons
+        .style('fill', function(d) {
+            return quantize(variable[d.id]);}).style('opacity', regularOpacity)
+
+    //Adding mouseevents
+        .on("mouseover", function(d) {
+            d3.select(this).transition().duration(150).style("opacity", 1);
+            tooltip.transition().duration(150)
+            .style("opacity", 1)
+            tooltip.html("Precinct " + nameById[d.id] + "<br>" +
+                     d3.round(variable[d.id]))
+            .style("left", (d3.event.pageX) + "px")
+            .style("top", (d3.event.pageY -50) + "px");})
+        .on("mouseout", function() {
+            d3.select(this)
+            .transition().duration(150)
+            .style("opacity", regularOpacity);
+            tooltip.transition().duration(150)
+            .style("opacity", 0);})            
+        .on('click', clicked)
+    
+    //Draw legend        
+        legend.append("rect")
+            .attr("x", 20)
+            .attr('class', function(d, i){return 'l'+i;})
+            .attr("y", function(d, i){ return legendHeight - (i*ls_h) - 2*ls_h;})
+            .attr("width", ls_w)
+            .attr("height", ls_h)
+            .style("fill", function(d, i) { return color(d-1); })
+            .style("opacity", 1);
+
+        legend.append("text")
+            .attr("x", 50)
+            .attr("y", function(d, i){ return legendHeight - (i*ls_h) - ls_h - 4;})
+            .attr('fill', 'white')
+            .style('opacity',1)
+            .attr('class',function(i){return 'leg' + i;});
+        
+    legend_labels = quantize.quantiles();
+    
+    d3.select('.leg1').text('0 - ' + d3.round(legend_labels[0]))
+    
+    d3.select('.leg2').text(d3.round(legend_labels[0]) + ' - ' + d3.round(legend_labels[1]))
+    
+    d3.select('.leg3').text(d3.round(legend_labels[1]) + ' - ' + d3.round(legend_labels[2]))
+    
+    d3.select('.leg4').text(d3.round(legend_labels[2]) + ' - ' + d3.round(legend_labels[3]))
+
+    d3.select('.leg5').text(d3.round(legend_labels[3]) + ' - ' + d3.round(DOMAIN[1]))
+
+    
+    textbox.append('svg').attr('class','svg1').attr('width', bar_width).attr('height', bar_height+20)
+        .append('rect').attr('class','bar1').attr('x', 10, 'y', 20 ).attr('width', bar_width).attr('height', bar_height).style('fill', 'green');
+    
+    textbox.append('svg').attr('class','svg2').attr('width', bar_width).attr('height', bar_height+20)
+        .append('rect').attr('class','bar2').attr('x', 10, 'y', 20).attr('width', bar_width).attr('height', bar_height).style('fill', 'blue');
+    
+    textbox.append('svg').attr('class','svg3').attr('width', bar_width).attr('height', bar_height+20)
+        .append('rect').attr('class','bar3').attr('x', 10, 'y', 20).attr('width', bar_width).attr('height', bar_height).style('fill', 'red');
+    
+            
+    textbox.selectAll('.svg1').append('text').attr('x',55).attr('y',bar_height+15).attr('text-anchor', 'middle').text('Black').attr('fill','white')
+    
+    textbox.selectAll('.svg2').append('text').attr('x',55).attr('y',bar_height+15).attr('text-anchor', 'middle').text('White').attr('fill','white')
+    
+    textbox.selectAll('.svg3').append('text').attr('x',55).attr('y',bar_height+15).attr('text-anchor', 'middle').text('Hispanic').attr('fill','white')
+
+    // INIT STATE HERE
+// Initialize bar variables    
+   
+//    barVariable1 = White_Frisk_share;
+//         barVariable2 = Black_Frisk_share;
+//         barVariable3 = Hisp_Frisk_share;
+    
+    
+    barVariable1 = White_Frisk_Pop;
+         barVariable2 = Black_Frisk_Pop;
+         barVariable3 = Hisp_Frisk_Pop;
+          
+//         bar1label = "W";
+//         bar2label = "B";
+//         bar3label = "H";
+
+        bar1label = "S-P ratio: W";
+     bar2label = "S-P ratio: B";
+         bar3label = "S-P ratio: H";
+
+//         temp2 = "Stops in 2012";
+//         temp2 = "Other behavior";
+           temp2 = "Race-driven clusters";
+    svg.append('text').attr('class','stopCounter').attr('fill', 'white').attr('x','35').attr('y','425').attr('font-size','50').text('153K stops').style('opacity',0);    
+    
+svg.append('text').attr('class','stopDayCounter').attr('fill', 'white').attr('x','35').attr('y','425').attr('font-size','50').text('1347 stops').style('opacity',0);    
+    
+    svg.append('text').attr('class','yearCounter').attr('fill', 'white').attr('x','35').attr('y','350').attr('font-size','80').text('2003').style('opacity',0);
+    svg.append('text').attr('class', 'dayCounter').attr('fill', 'white').attr('x','35').attr('y','350').attr('font-size','80').text('Day 1').style('opacity',0);
+   svg.append('text').attr('class', 'kCounter').attr('fill', 'white').attr('x','35').attr('y','350').attr('font-size','80').text('Race-driven').style('opacity',0);
+    
+    
+    
+    
+if (triggerK == 1){
+        d3.select('.leg1').text(cluster1).style('opacity',1)
+    d3.select('.l0').style('fill','red').style('opacity',1)
+
+    
+    d3.select('.leg2').text(cluster2).style('opacity',1)
+    d3.select('.l1').style('fill','yellow').style('opacity',1)
+    
+    d3.select('.leg3').text(cluster3).style('opacity',1)
+    d3.select('.l2').style('fill','blue').style('opacity',1)
+    
+    d3.select('.leg4').style('opacity',0)
+    d3.select('.l3').style('opacity',0)
+    
+    d3.select('.leg5').style('opacity',0)
+    d3.select('.l4').style('opacity',0)
+}
+    
+  if (triggerK == 1){
+    d3.select('.leg1').text(cluster1).style('opacity',1)
+    d3.select('.l0').style('fill','red').style('opacity',1)
+
+    
+    d3.select('.leg2').text(cluster2).style('opacity',1)
+    d3.select('.l1').style('fill','yellow').style('opacity',1)
+    
+    d3.select('.leg3').text(cluster3).style('opacity',1)
+    d3.select('.l2').style('fill','blue').style('opacity',1)
+    
+    d3.select('.leg4').style('opacity',0)
+    d3.select('.l3').style('opacity',0)
+    
+    d3.select('.leg5').style('opacity',0)
+    d3.select('.l4').style('opacity',0)
+    
+    svg.selectAll('path').style('fill', function(d) {
+    if(variable[d.id] == 1){return 'red';}
+    else if(variable[d.id] == 2){return 'yellow';}
+    else if(variable[d.id] == 3){return 'blue';}
+    else {return 'black';}    
+        })
+    .style('opacity', regularOpacity)
+    // update tooltip
+    .on("mouseover", function(d) {
+        d3.select(this).transition().duration(150).style("opacity", 1);
+        tooltip.transition().duration(150)
+        .style("opacity", 1)
+        tooltip.html("Precinct " + nameById[d.id] + "<br>" +
+                 + d3.round(variable[d.id]))
+        .style("left", (d3.event.pageX) + "px")
+        .style("top", (d3.event.pageY -30) + "px");})
+
+}
+    
+    
+    
+    }
+
+        
+        function ready(error, Map, Data){
+            // Store data from csv into arrays, whose indices match the map ids
+            Data.forEach(function(d) {    
+                nameById[d.Precinct] = +d.Precinct;
+                description[d.Precinct] = d.PP_Desc;
+
+                
+Frisk_Crime_ratio[d.Precinct] = +d.Frisk_Crime_ratio;
+Crime_Pop_ratio[d.Precinct] = +d.Crime_Pop_ratio;
+Frisk_Pop_ratio[d.Precinct] = +d.Frisk_Pop_ratio;
+Black_Frisk_Pop[d.Precinct] = +d.Black_Frisk_Pop;
+Black_Pop_share[d.Precinct] = +d.Black_Pop_share;
+Black_Frisk_share[d.Precinct] = +d.Black_Frisk_share;
+Hisp_Frisk_Pop[d.Precinct] = +d.Hisp_Frisk_Pop;
+Hisp_Pop_share[d.Precinct] = +d.Hisp_Pop_share;
+Hisp_Frisk_share[d.Precinct] = +d.Hisp_Frisk_share;
+White_Frisk_Pop[d.Precinct] = +d.White_Frisk_Pop;
+White_Pop_share[d.Precinct] = +d.White_Pop_share;
+White_Frisk_share[d.Precinct] = +d.White_Frisk_share;
+TotCrime_01_12[d.Precinct] = +d.TotCrime_01_12;
+Vcrime_01_12[d.Precinct] = +d.Vcrime_01_12;
+Frisk_03_12[d.Precinct] = +d.Frisk_03_12;
+Success[d.Precinct] = +d.Success;
+Arrest[d.Precinct] = +d.Arrest;
+Weap_Nonweap[d.Precinct] = +d.Weap_Nonweap;
+PhysForce[d.Precinct] = +d.PhysForce;
+Duration[d.Precinct] = +d.Duration;
+Seasonality[d.Precinct] = +d.Seasonality;
+K_race[d.Precinct] = +d.K_race;
+K_nonrace[d.Precinct] = +d.K_nonrace;
+Precinct_Crime_Share_2001[d.Precinct] = +d.Precinct_Crime_Share_2001;
+Precinct_Crime_Share_2012[d.Precinct] = +d.Precinct_Crime_Share_2012;
+Precinct_Stop_Share[d.Precinct] = +d.Precinct_Stop_Share;
+Count_Day_1[d.Precinct] = +d.Count_Day_1;
+Count_Day_2[d.Precinct] = +d.Count_Day_2;
+Count_Day_3[d.Precinct] = +d.Count_Day_3;
+Count_Day_4[d.Precinct] = +d.Count_Day_4;
+Count_Day_5[d.Precinct] = +d.Count_Day_5;
+Count_Day_6[d.Precinct] = +d.Count_Day_6;
+Count_Day_7[d.Precinct] = +d.Count_Day_7;
+Count_Day_8[d.Precinct] = +d.Count_Day_8;
+Count_Day_9[d.Precinct] = +d.Count_Day_9;
+Count_Day_10[d.Precinct] = +d.Count_Day_10;
+Count_Day_11[d.Precinct] = +d.Count_Day_11;
+Count_Day_12[d.Precinct] = +d.Count_Day_12;
+Count_Day_13[d.Precinct] = +d.Count_Day_13;
+Count_Day_14[d.Precinct] = +d.Count_Day_14;
+Count_Day_15[d.Precinct] = +d.Count_Day_15;
+Count_Day_16[d.Precinct] = +d.Count_Day_16;
+Count_Day_17[d.Precinct] = +d.Count_Day_17;
+Count_Day_18[d.Precinct] = +d.Count_Day_18;
+Count_Day_19[d.Precinct] = +d.Count_Day_19;
+Count_Day_20[d.Precinct] = +d.Count_Day_20;
+Count_Day_21[d.Precinct] = +d.Count_Day_21;
+Count_Day_22[d.Precinct] = +d.Count_Day_22;
+Count_Day_23[d.Precinct] = +d.Count_Day_23;
+Count_Day_24[d.Precinct] = +d.Count_Day_24;
+Count_Day_25[d.Precinct] = +d.Count_Day_25;
+Count_Day_26[d.Precinct] = +d.Count_Day_26;
+Count_Day_27[d.Precinct] = +d.Count_Day_27;
+Count_Day_28[d.Precinct] = +d.Count_Day_28;
+Count_Day_29[d.Precinct] = +d.Count_Day_29;
+Count_Day_30[d.Precinct] = +d.Count_Day_30;
+Count_Day_31[d.Precinct] = +d.Count_Day_31;
+Counts_2003[d.Precinct] = +d.Counts_2003;
+Counts_2004[d.Precinct] = +d.Counts_2004;
+Counts_2005[d.Precinct] = +d.Counts_2005;
+Counts_2006[d.Precinct] = +d.Counts_2006;
+Counts_2007[d.Precinct] = +d.Counts_2007;
+Counts_2008[d.Precinct] = +d.Counts_2008;
+Counts_2009[d.Precinct] = +d.Counts_2009;
+Counts_2010[d.Precinct] = +d.Counts_2010;
+Counts_2011[d.Precinct] = +d.Counts_2011;
+Counts_2012[d.Precinct] = +d.Counts_2012;
+            
+            
+            });
+
+            nyp = Map;
+
+            // Generate the map
+            
+            //INIT STATE HERE
+        //    initializeMap(Frisk_Pop_ratio);      
+        //        initializeMap(Success); 
+        initializeMap(K_race);    
+        }
+        
+        // initialize data
+        var nameById = []; 
+    var description = [];    
+
+var Frisk_Crime_ratio= [];
+var Crime_Pop_ratio= [];
+var Frisk_Pop_ratio= [];
+var Black_Frisk_Pop= [];
+var Black_Pop_share= [];
+var Black_Frisk_share= [];
+var Hisp_Frisk_Pop= [];
+var Hisp_Pop_share= [];
+var Hisp_Frisk_share= [];
+var White_Frisk_Pop= [];
+var White_Pop_share= [];
+var White_Frisk_share= [];
+var TotCrime_01_12= [];
+var Vcrime_01_12= [];
+var Frisk_03_12= [];
+var Success= [];
+var Arrest= [];
+var Weap_Nonweap= [];
+var PhysForce= [];
+var Duration= [];
+var Seasonality= [];
+var K_race= [];
+var K_nonrace= [];
+var Precinct_Crime_Share_2001= [];
+var Precinct_Crime_Share_2012= [];
+var Precinct_Stop_Share= [];
+var Count_Day_1= [];
+var Count_Day_2= [];
+var Count_Day_3= [];
+var Count_Day_4= [];
+var Count_Day_5= [];
+var Count_Day_6= [];
+var Count_Day_7= [];
+var Count_Day_8= [];
+var Count_Day_9= [];
+var Count_Day_10= [];
+var Count_Day_11= [];
+var Count_Day_12= [];
+var Count_Day_13= [];
+var Count_Day_14= [];
+var Count_Day_15= [];
+var Count_Day_16= [];
+var Count_Day_17= [];
+var Count_Day_18= [];
+var Count_Day_19= [];
+var Count_Day_20= [];
+var Count_Day_21= [];
+var Count_Day_22= [];
+var Count_Day_23= [];
+var Count_Day_24= [];
+var Count_Day_25= [];
+var Count_Day_26= [];
+var Count_Day_27= [];
+var Count_Day_28= [];
+var Count_Day_29= [];
+var Count_Day_30= [];
+var Count_Day_31= [];
+var Counts_2003= [];
+var Counts_2004= [];
+var Counts_2005= [];
+var Counts_2006= [];
+var Counts_2007= [];
+var Counts_2008= [];
+var Counts_2009= [];
+var Counts_2010= [];
+var Counts_2011= [];
+var Counts_2012= [];
+    
+    var DOMAIN;            
+        queue()
+        
+            .defer(d3.json,"https://dl.dropboxusercontent.com/u/60227913/nycCrimeFrisk/nypp.json")
+            .defer(d3.csv,'https://dl.dropboxusercontent.com/u/60227913/nycCrimeFrisk/finalData.csv')
+            .await(ready);
+
+        
+// Update map via dropdown            
+d3.select("#polyVars")
+    .on("change", change)
+    .selectAll("option")
+    // add options HERE
+    .data([
+        
+        "# Stops per 10 crimes committed","# Crimes per 1000 residents","# Stops per 1000 residents","# Stops per 10 residents (Blacks)","% Black among residents","% Black among all stops","# Stops per 10 residents (Hispanics)","% Hispanic among residents","% Hispanic among all stops","# Stops per 10 residents (White)","% White among residents","% White among all stops","% Change in total crime (01 - 12)","% Change in violent crimes (01-12)","% Change in stops (03-12)","% Successful among all stops","% Resulting in arrest","Weapons / Contraband Found","% Physical force used in stop","Average duration (min)","Seasonality index","K-means: Race","K-means: Non-race","Share of crimes in NYC (2001)","Share of crimes in NYC (2012)","Share of stops in NYC (2012)","Stops: Day 1","Stops: Day 2","Stops: Day 3","Stops: Day 4","Stops: Day 5","Stops: Day 6","Stops: Day 7","Stops: Day 8","Stops: Day 9","Stops: Day 10","Stops: Day 11","Stops: Day 12","Stops: Day 13","Stops: Day 14","Stops: Day 15","Stops: Day 16","Stops: Day 17","Stops: Day 18","Stops: Day 19","Stops: Day 20","Stops: Day 21","Stops: Day 22","Stops: Day 23","Stops: Day 24","Stops: Day 25","Stops: Day 26","Stops: Day 27","Stops: Day 28","Stops: Day 29","Stops: Day 30","Stops: Day 31","Stops:  2003","Stops:  2004","Stops:  2005","Stops:  2006","Stops:  2007","Stops:  2008","Stops:  2009","Stops:  2010","Stops:  2011","Stops:  2012"    
+        ])
+
+    .enter().append("option")
+    .attr("value", function(d) { return d; })
+    .attr('class', function(d) {
+    // INIT polycolor drop down
+        
+//        if(d == "# Stops per 1000 residents"){
+            if(d == "K-means: Race"){ 
+//        if(d == "% Successful among all stops"){
+            return 'init'}
+        else{return 'other'}
+        ;})
+        
+    .text(function(d) { return d; });
+    
+    
+    d3.select(".init").attr('selected', 'selected');
+
+            
+// Update map via dropdown            
+d3.select("#barVar1")
+    .on("change", changeBar1)
+    .selectAll("option")
+    // add options HERE
+    .data([
+        
+        "Stops in 2012",
+        "Race-driven clusters",
+        "Nonrace-driven clusters",
+        "Other behavior"
+
+    
+    
+    ])
+    .enter().append("option")
+    .attr("value", function(d) { return d; })
+    .attr('class', function(d) {
+// INIT theme drop down        
+//       if(d == "Stops in 2012"){
+       if(d == "Race-driven clusters"){
+    //     if(d == "Other behavior"){
+        return 'init2'}
+        else{return 'other2'}
+        ;})
+      .text(function(d) { return d; });
+
+    d3.select(".init2").attr('selected', 'selected');
+    
+    
+function change() {
+    triggerK = 0;
+    
+
+    temp = this.value      
+    // add variables HERE
+    
+if(temp == "# Stops per 10 crimes committed") {variable = Frisk_Crime_ratio}
+else if(temp == "# Crimes per 1000 residents") {variable = Crime_Pop_ratio}
+else if(temp == "# Stops per 1000 residents") {variable = Frisk_Pop_ratio}
+else if(temp == "# Stops per 10 residents (Blacks)") {variable = Black_Frisk_Pop}
+else if(temp == "% Black among residents") {variable = Black_Pop_share}
+else if(temp == "% Black among all stops") {variable = Black_Frisk_share}
+else if(temp == "# Stops per 10 residents (Hispanics)") {variable = Hisp_Frisk_Pop}
+else if(temp == "% Hispanic among residents") {variable = Hisp_Pop_share}
+else if(temp == "% Hispanic among all stops") {variable = Hisp_Frisk_share}
+else if(temp == "# Stops per 10 residents (White)") {variable = White_Frisk_Pop}
+else if(temp == "% White among residents") {variable = White_Pop_share}
+else if(temp == "% White among all stops") {variable = White_Frisk_share}
+else if(temp == "% Change in total crime (01 - 12)") {variable = TotCrime_01_12}
+else if(temp == "% Change in violent crimes (01-12)") {variable = Vcrime_01_12}
+else if(temp == "% Change in stops (03-12)") {variable = Frisk_03_12}
+else if(temp == "% Successful among all stops") {variable = Success}
+else if(temp == "% Resulting in arrest") {variable = Arrest}
+else if(temp == "Weapons / Contraband Found") {variable = Weap_Nonweap}
+else if(temp == "% Physical force used in stop") {variable = PhysForce}
+else if(temp == "Average duration (min)") {variable = Duration}
+else if(temp == "Seasonality index") {variable = Seasonality}
+else if(temp == "K-means: Race") {variable = K_race;
+                                 triggerK = 1;
+                                 }
+else if(temp == "K-means: Non-race") {variable = K_nonrace;
+                                 triggerK = 1;
+                                 }
+else if(temp == "Share of crimes in NYC (2001)") {variable = Precinct_Crime_Share_2001}
+else if(temp == "Share of crimes in NYC (2012)") {variable = Precinct_Crime_Share_2012}
+else if(temp == "Share of stops in NYC (2012)") {variable = Precinct_Stop_Share}
+else if(temp == "Stops: Day 1") {variable = Count_Day_1}
+else if(temp == "Stops: Day 2") {variable = Count_Day_2}
+else if(temp == "Stops: Day 3") {variable = Count_Day_3}
+else if(temp == "Stops: Day 4") {variable = Count_Day_4}
+else if(temp == "Stops: Day 5") {variable = Count_Day_5}
+else if(temp == "Stops: Day 6") {variable = Count_Day_6}
+else if(temp == "Stops: Day 7") {variable = Count_Day_7}
+else if(temp == "Stops: Day 8") {variable = Count_Day_8}
+else if(temp == "Stops: Day 9") {variable = Count_Day_9}
+else if(temp == "Stops: Day 10") {variable = Count_Day_10}
+else if(temp == "Stops: Day 11") {variable = Count_Day_11}
+else if(temp == "Stops: Day 12") {variable = Count_Day_12}
+else if(temp == "Stops: Day 13") {variable = Count_Day_13}
+else if(temp == "Stops: Day 14") {variable = Count_Day_14}
+else if(temp == "Stops: Day 15") {variable = Count_Day_15}
+else if(temp == "Stops: Day 16") {variable = Count_Day_16}
+else if(temp == "Stops: Day 17") {variable = Count_Day_17}
+else if(temp == "Stops: Day 18") {variable = Count_Day_18}
+else if(temp == "Stops: Day 19") {variable = Count_Day_19}
+else if(temp == "Stops: Day 20") {variable = Count_Day_20}
+else if(temp == "Stops: Day 21") {variable = Count_Day_21}
+else if(temp == "Stops: Day 22") {variable = Count_Day_22}
+else if(temp == "Stops: Day 23") {variable = Count_Day_23}
+else if(temp == "Stops: Day 24") {variable = Count_Day_24}
+else if(temp == "Stops: Day 25") {variable = Count_Day_25}
+else if(temp == "Stops: Day 26") {variable = Count_Day_26}
+else if(temp == "Stops: Day 27") {variable = Count_Day_27}
+else if(temp == "Stops: Day 28") {variable = Count_Day_28}
+else if(temp == "Stops: Day 29") {variable = Count_Day_29}
+else if(temp == "Stops: Day 30") {variable = Count_Day_30}
+else if(temp == "Stops: Day 31") {variable = Count_Day_31}
+else if(temp == "Stops:  2003") {variable = Counts_2003}
+else if(temp == "Stops:  2004") {variable = Counts_2004}
+else if(temp == "Stops:  2005") {variable = Counts_2005}
+else if(temp == "Stops:  2006") {variable = Counts_2006}
+else if(temp == "Stops:  2007") {variable = Counts_2007}
+else if(temp == "Stops:  2008") {variable = Counts_2008}
+else if(temp == "Stops:  2009") {variable = Counts_2009}
+else if(temp == "Stops:  2010") {variable = Counts_2010}
+else if(temp == "Stops:  2011") {variable = Counts_2011}
+else if(temp == "Stops:  2012") {variable = Counts_2012}    
+
+    
+if(triggerK == 0){    
+svg.selectAll('rect').transition().style('opacity',1);
+legend.selectAll('text').style('opacity',1);
+    
+    DOMAIN = d3.extent(variable)
+    quantize = d3.scale.quantile()
+        .domain(DOMAIN)
+        .range(d3.range(5).map(function (i) {return color(i);}));
+    // update polygon color
+    svg.selectAll('path').style('fill', function(d) {
+        return quantize(variable[d.id]);})
+        .style('opacity', regularOpacity)
+    // update tooltip
+    .on("mouseover", function(d) {
+        d3.select(this).transition().duration(150).style("opacity", 1);
+        tooltip.transition().duration(150)
+        .style("opacity", 1)
+        tooltip.html("Precinct " + nameById[d.id] + "<br>" +
+                 + d3.round(variable[d.id]))
+        .style("left", (d3.event.pageX) + "px")
+        .style("top", (d3.event.pageY -30) + "px");})
+    
+
+    legend_labels = quantize.quantiles();
+    
+    d3.select('.leg1').text(d3.round(DOMAIN[0]) + ' - ' + d3.round(legend_labels[0]))
+    
+    d3.select('.leg2').text(d3.round(legend_labels[0]) + ' - ' + d3.round(legend_labels[1]))
+    
+    d3.select('.leg3').text(d3.round(legend_labels[1]) + ' - ' + d3.round(legend_labels[2]))
+    
+    d3.select('.leg4').text(d3.round(legend_labels[2]) + ' - ' + d3.round(legend_labels[3]))
+
+    d3.select('.leg5').text(d3.round(legend_labels[3]) + ' - ' + d3.round(DOMAIN[1]))
+    
+    
+        d3.select('.l3').style('opacity',1)
+        d3.select('.l4').style('opacity',1)
+        
+        
+    d3.select('.l0').style('fill','#ffc0cb')
+        
+    d3.select('.l1').style('fill','#ff8374')
+    d3.select('.l2').style('fill','#ff6752')
+    
+        
+    d3.select('.leg5').style('opacity',1)
+    d3.select('.leg4').style('opacity',1)
+
+}
+else {
+    
+    d3.select('.leg1').text(cluster1).style('opacity',1)
+    d3.select('.l0').style('fill','red').style('opacity',1)
+
+    
+    d3.select('.leg2').text(cluster2).style('opacity',1)
+    d3.select('.l1').style('fill','yellow').style('opacity',1)
+    
+    d3.select('.leg3').text(cluster3).style('opacity',1)
+    d3.select('.l2').style('fill','blue').style('opacity',1)
+    
+    d3.select('.leg4').style('opacity',0)
+    d3.select('.l3').style('opacity',0)
+    
+    d3.select('.leg5').style('opacity',0)
+    d3.select('.l4').style('opacity',0)
+    
+    svg.selectAll('path').style('fill', function(d) {
+    if(variable[d.id] == 1){return 'red';}
+    else if(variable[d.id] == 2){return 'yellow';}
+    else if(variable[d.id] == 3){return 'blue';}
+    else {return 'black';}    
+        })
+    .style('opacity', regularOpacity)
+    // update tooltip
+    .on("mouseover", function(d) {
+        d3.select(this).transition().duration(150).style("opacity", 1);
+        tooltip.transition().duration(150)
+        .style("opacity", 1)
+        tooltip.html("Precinct " + nameById[d.id] + "<br>" +
+                 + d3.round(variable[d.id]))
+        .style("left", (d3.event.pageX) + "px")
+        .style("top", (d3.event.pageY -30) + "px");})
+
+
+}
+    
+    
+}    
+            
+function changeBar1() {
+    temp2 = this.value      
+    // add variables HERE
+
+      if(temp2 == "Stops in 2012") {
+         barVariable1 = White_Frisk_share;
+         barVariable2 = Black_Frisk_share;
+         barVariable3 = Hisp_Frisk_share;
+          
+         bar1label = "W" + barVariable1[d.id];
+         bar2label = "B";
+         bar3label = "H";
+      }
+      else if(temp2 == "Race-driven clusters") {
+         barVariable1 = White_Frisk_Pop;
+         barVariable2 = Black_Frisk_Pop;
+         barVariable3 = Hisp_Frisk_Pop;
+          
+         bar1label = "S-P ratio: W";
+         bar2label = "S-P ratio: B";
+         bar3label = "S-P ratio: H";
+      }
+      else if(temp2 == "Nonrace-driven clusters") {
+         barVariable1 = White_Frisk_Pop;
+         barVariable2 = Black_Frisk_Pop;
+         barVariable3 = Hisp_Frisk_Pop;
+          
+         bar1label = "S-P ratio: W";
+         bar2label = "S-P ratio: B";
+         bar3label = "S-P ratio: H";
+      }
+      else if(temp2 == "Other behavior") {
+         barVariable1 = White_Frisk_share;
+         barVariable2 = Black_Frisk_share;
+         barVariable3 = Hisp_Frisk_share;
+          
+         bar1label = "W";
+         bar2label = "B";
+         bar3label = "H";
+      }
+}
+
+    
+    
+
+    
+// ZOOM AND PAN
+function clicked(d){
+    Desc = description[d.id];
+    var x,y,k;
+    
+    if (d && centered !== d ) {
+        var centroid = path.centroid(d);
+        x = centroid[0]
+        y = centroid[1];
+        k = 2;
+        centered = d;
+    }
+    else {
+        x = width / 2;
+        y = height / 2;
+        k = 1;
+        centered = null;
+    }
+    
+    g.selectAll('path')
+        .classed('active', centered && function(d) { return d === centered; } ) ;
+    
+    g.transition()
+        .duration(350)
+        .attr('transform', 'translate(' + width / 2 + ',' + height/2 + ')scale(' + k + ')translate(' + -x + ',' + -y + ')')
+        .style('stroke-width', 1.5/k + 'px');
+
+    // When we focus, let's remove the tool tip, but supplement with a data table at the corner
+
+    if (! d || centered === d){
+        d3.select(this)
+            .transition().duration(350)
+            .style("opacity", 1);
+        d3.select(this).transition().duration(350).style("opacity", 1);
+            textbox.transition().duration(350)
+            .style("opacity", 1);
+        textbox.selectAll('.bar1').style('fill','darkred');
+        textbox.selectAll('.bar2').style('fill','darkred');
+        textbox.selectAll('.bar3').style('fill','darkred');
+        
+        
+         d3.select(this).transition().duration(350).style("opacity", 1);
+
+// Change the info box        
+      if(temp2 == "Stops in 2012") {
+info = "Precinct " + nameById[d.id] + "<br>" +
+                 "<br>" + 
+                 "Total crimes per 1000 residents: " + d3.round(Crime_Pop_ratio[d.id]) + "<br>" +
+                 "Total stops per 1000 residents: " +  d3.round(Frisk_Pop_ratio[d.id]) + "<br><br>" +
+                 "White: <br>" + 
+                 "  " + d3.round(White_Frisk_share[d.id]) + "% of stops<br>" +
+                 "  " + d3.round(White_Pop_share[d.id]) + "% of residents<br><br>" +
+                 "Black: <br>" + 
+                 "  " + d3.round(Black_Frisk_share[d.id]) + "% of stops<br>" +
+                 "  " + d3.round(Black_Pop_share[d.id]) + "% of residents<br><br>" +
+                 "Hispanic: <br>" + 
+                 "  " + d3.round(Hisp_Frisk_share[d.id]) + "% of stops<br>" +
+                 "  " + d3.round(Hisp_Pop_share[d.id]) + "% of residents<br><br>" 
+      }
+      else if(temp2 == "Race-driven clusters") {
+info = "Precinct " + nameById[d.id] + "<br>" +
+                 "<br>" + 
+                 "Total crimes per 1000 residents: " + d3.round(Crime_Pop_ratio[d.id]) + "<br>" +
+                 "Total stops per 1000 residents: " +  d3.round(Frisk_Pop_ratio[d.id]) + "<br><br>" +
+                 "Race-driven cluster: " + clusterNames[K_race[d.id]-1] + "<br><br>" +
+                 "Cluster 1: " + cluster1 + "<br>" +
+                 "  White: " + "65%" + " " +
+                 "  Black: " + "8%" + " " +
+                 "  Hispanic: " + "14%" + "<br><br>" +
+                 "Cluster 2: " + cluster2 + "<br>" +
+                 "  White: " + "60%" + " " +
+                 "  Black: " + "8%" + " " +
+                 "  Hispanic: " + "33%" + "<br><br>" +
+                 "Cluster 3: " + cluster3 + "<br>" +
+                 "  White: " + "25%" + " " +
+                 "  Black: " + "45%" + " " +
+                 "  Hispanic: " + "32%" + "<br><br>" + 
+                 "Race-based cluster: "+ clusterNames[K_race[d.id]-1] + "<br>" +
+                 "Nonrace-based cluster: " + clusterNames[K_nonrace[d.id]-1] + "<br>"
+    
+      }
+      else if(temp2 == "Nonrace-driven clusters") {
+info = "Precinct " + nameById[d.id] + "<br>" +
+                 "<br>" + 
+                 "Total crimes per 1000 residents: " + d3.round(Crime_Pop_ratio[d.id]) + "<br>" +
+                 "Total stops per 1000 residents: " +  d3.round(Frisk_Pop_ratio[d.id]) + "<br><br>" +
+                 "Nonrace-driven cluster: " + clusterNames[K_nonrace[d.id]-1] + "<br><br>" +
+                 "Cluster 1: " + cluster1 + "<br>" +
+                 "  White: " + "55%" + " " +
+                 "  Black: " + "16%" + " " +
+                 "  Hispanic: " + "22%" + "<br><br>" +
+                 "Cluster 2: " + cluster2 + "<br>" +
+                 "  White: " + "42%" + " " +
+                 "  Black: " + "27%" + " " +
+                 "  Hispanic: " + "29%" + "<br><br>" +
+                 "Cluster 3: " + cluster3 + "<br>" +
+                 "  White: " + "17%" + " " +
+                 "  Black: " + "59%" + " " +
+                 "  Hispanic: " + "30%" + "<br><br>" + 
+                 "Race-based cluster: "+ clusterNames[K_race[d.id]-1] + "<br>" +
+                 "Nonrace-based cluster: " + clusterNames[K_nonrace[d.id]-1] + "<br>"
+    
+      }
+      else if(temp2 == "Other behavior") {
+info = "Precinct " + nameById[d.id] + "<br>" +
+                 "<br>" + 
+                 "Total crimes per 1000 residents: " + d3.round(Crime_Pop_ratio[d.id]) + "<br>" +
+                 "Total stops per 1000 residents: " +  d3.round(Frisk_Pop_ratio[d.id]) + "<br><br>" +
+                 "  " + d3.round(Success[d.id]) + "% of stops are successful<br>" +
+                 "  " + d3.round(PhysForce[d.id]) + "% of stops involved physical force<br>" +
+                 "  " + d3.round(Arrest[d.id]) + "% of stops result in arrest<br>" +
+    
+                 "  Ratio of stops: Weapons to Non-weapons : " + d3.round(Weap_Nonweap[d.id])+"<br>" +
+                 "  Average duration (min): " + d3.round(Duration[d.id]) + "<br><br>" +
+                 "Race-based cluster: "+ clusterNames[K_race[d.id]-1] + "<br>" +
+                 "Nonrace-based cluster: " + clusterNames[K_nonrace[d.id]-1] + "<br>"
+      }
+        datatextbox.transition().duration(350)
+        .style("opacity", 1)
+        datatextbox.html(info)
+        
+
+        ppdesc.transition().duration(350)
+        .style('opacity',1)
+        .text(function(){
+            if(Desc.length < 500){
+            return "NYC.gov Partial Description:                                            " + Desc;}
+            else{
+                return "NYC.gov Partial Description:                                        " + Desc + "...";}
+        })
+            
+        
+        
+        textbox.selectAll('.bar1').attr('height', barVariable1[d.id]).attr('y',bar_height - barVariable1[d.id]);
+        textbox.selectAll('.bar2').attr('height', barVariable2[d.id]).attr('y',bar_height - barVariable2[d.id]);
+        textbox.selectAll('.bar3').attr('height', barVariable3[d.id]).attr('y',bar_height - barVariable3[d.id]);
+        
+//        textbox.selectAll('.svg1').select('text').text(d3.round(barVariable1[d.id]));
+//        textbox.selectAll('.svg2').select('text').text(d3.round(barVariable2[d.id]));
+//        textbox.selectAll('.svg3').select('text').text(d3.round(barVariable3[d.id]));
+
+        textbox.selectAll('.svg1').select('text').text(bar1label + " (" + d3.round(barVariable1[d.id]) + ")");
+        textbox.selectAll('.svg2').select('text').text(bar2label + " (" + d3.round(barVariable2[d.id]) + ")");
+
+textbox.selectAll('.svg3').select('text').text(bar3label + " (" + d3.round(barVariable3[d.id]) + ")");
+
+    }
+    
+    else { // return to normal
+    d3.select(this)
+        .transition().duration(350)
+        .style("opacity", '1');
+
+    textbox.transition().duration(350)
+    .style("opacity", 0)
+    
+    datatextbox.transition().duration(350)
+    .style("opacity", 0)
+
+ppdesc.transition().duration(350)
+    .style("opacity", 0)
+        
+    }
+    
+}       
+
+function timeanalysis(){
+svg.selectAll('.dayCounter').transition().style('opacity',1);
+    
+    
+svg.selectAll('.stopDayCounter').transition().style('opacity',1);    
+svg.selectAll('rect').transition().style('opacity',0);
+legend.selectAll('text').style('opacity',0);
+    
+ changeDate();
+}
+
+function timeanalysis2(){
+svg.selectAll('.yearCounter').transition().style('opacity',1);
+    svg.selectAll('.stopCounter').transition().style('opacity',1);
+svg.selectAll('rect').transition().style('opacity',0);
+legend.selectAll('text').style('opacity',0);
+    
+    changeDate2();
+
+}
+    
+function kanalysis(){
+svg.selectAll('.kCounter').transition().style('opacity',1);
+    d3.select('.leg1').text(cluster1).style('opacity',1)
+    d3.select('.l0').style('fill','red').style('opacity',1)
+
+    
+    d3.select('.leg2').text(cluster2).style('opacity',1)
+    d3.select('.l1').style('fill','yellow').style('opacity',1)
+    
+    d3.select('.leg3').text(cluster3).style('opacity',1)
+    d3.select('.l2').style('fill','blue').style('opacity',1)
+    
+    d3.select('.leg4').style('opacity',0)
+    d3.select('.l3').style('opacity',0)
+    
+    d3.select('.leg5').style('opacity',0)
+    d3.select('.l4').style('opacity',0)
+swapK();
+    
+}
+    
+function swapK(){    
+    svg.selectAll('path').style('opacity',1).style('fill', function(d) {
+    if(K_race[d.id] == 1){return 'red';}
+    else if(K_race[d.id] == 2){return 'yellow';}
+    else if(K_race[d.id] == 3){return 'blue';}
+    else {return 'black';}    
+        })
+    ;
+
+    svg.selectAll('path')
+    .style('opacity',1)
+    .transition().delay(0).duration(2200)
+
+        .transition().style('fill', function(d) {
+    if(K_nonrace[d.id] == 1){return 'red';}
+    else if(K_nonrace[d.id] == 2){return 'yellow';}
+    else if(K_nonrace[d.id] == 3){return 'blue';}
+    else {return 'black';}    
+        })
+        .transition().style('fill', function(d) {
+    if(K_race[d.id] == 1){return 'red';}
+    else if(K_race[d.id] == 2){return 'yellow';}
+    else if(K_race[d.id] == 3){return 'blue';}
+    else {return 'black';}    
+        })
+        .transition().style('fill', function(d) {
+    if(K_nonrace[d.id] == 1){return 'red';}
+    else if(K_nonrace[d.id] == 2){return 'yellow';}
+    else if(K_nonrace[d.id] == 3){return 'blue';}
+    else {return 'black';}    
+        })
+        .transition().style('fill', function(d) {
+    if(K_race[d.id] == 1){return 'red';}
+    else if(K_race[d.id] == 2){return 'yellow';}
+    else if(K_race[d.id] == 3){return 'blue';}
+    else {return 'black';}    
+        })
+            .transition().style('fill', function(d) {
+    if(K_nonrace[d.id] == 1){return 'red';}
+    else if(K_nonrace[d.id] == 2){return 'yellow';}
+    else if(K_nonrace[d.id] == 3){return 'blue';}
+    else {return 'black';}    
+        })
+        .transition().style('fill', function(d) {
+    if(K_race[d.id] == 1){return 'red';}
+    else if(K_race[d.id] == 2){return 'yellow';}
+    else if(K_race[d.id] == 3){return 'blue';}
+    else {return 'black';}    
+        })
+            .transition().style('fill', function(d) {
+    if(K_nonrace[d.id] == 1){return 'red';}
+    else if(K_nonrace[d.id] == 2){return 'yellow';}
+    else if(K_nonrace[d.id] == 3){return 'blue';}
+    else {return 'black';}    
+        })
+        .transition().style('fill', function(d) {
+    if(K_race[d.id] == 1){return 'red';}
+    else if(K_race[d.id] == 2){return 'yellow';}
+    else if(K_race[d.id] == 3){return 'blue';}
+    else {return 'black';}    
+        })
+            .transition().style('fill', function(d) {
+    if(K_nonrace[d.id] == 1){return 'red';}
+    else if(K_nonrace[d.id] == 2){return 'yellow';}
+    else if(K_nonrace[d.id] == 3){return 'blue';}
+    else {return 'black';}    
+        })
+        .transition().style('fill', function(d) {
+    if(K_race[d.id] == 1){return 'red';}
+    else if(K_race[d.id] == 2){return 'yellow';}
+    else if(K_race[d.id] == 3){return 'blue';}
+    else {return 'black';}    
+        })
+        .transition().style('fill', function(d) {
+    if(K_nonrace[d.id] == 1){return 'red';}
+    else if(K_nonrace[d.id] == 2){return 'yellow';}
+    else if(K_nonrace[d.id] == 3){return 'blue';}
+    else {return 'black';}    
+        })
+        .transition().style('fill', function(d) {
+    if(K_race[d.id] == 1){return 'red';}
+    else if(K_race[d.id] == 2){return 'yellow';}
+    else if(K_race[d.id] == 3){return 'blue';}
+    else {return 'black';}    
+        })
+    .transition().style('fill', function(d) {
+    if(K_nonrace[d.id] == 1){return 'red';}
+    else if(K_nonrace[d.id] == 2){return 'yellow';}
+    else if(K_nonrace[d.id] == 3){return 'blue';}
+    else {return 'black';}
+        })
+       .transition().style('fill', function(d) {
+    if(K_race[d.id] == 1){return 'red';}
+    else if(K_race[d.id] == 2){return 'yellow';}
+    else if(K_race[d.id] == 3){return 'blue';}
+    else {return 'black';}
+        })
+        .transition().style('fill', function(d) {
+    if(K_nonrace[d.id] == 1){return 'red';}
+    else if(K_nonrace[d.id] == 2){return 'yellow';}
+    else if(K_nonrace[d.id] == 3){return 'blue';}
+    else {return 'black';}
+        })
+       .transition().style('fill', function(d) {
+    if(K_race[d.id] == 1){return 'red';}
+    else if(K_race[d.id] == 2){return 'yellow';}
+    else if(K_race[d.id] == 3){return 'blue';}
+    else {return 'black';}
+        })
+        .transition().style('fill', function(d) {
+    if(K_nonrace[d.id] == 1){return 'red';}
+    else if(K_nonrace[d.id] == 2){return 'yellow';}
+    else if(K_nonrace[d.id] == 3){return 'blue';}
+    else {return 'black';}
+        })
+       .transition().style('fill', function(d) {
+    if(K_race[d.id] == 1){return 'red';}
+    else if(K_race[d.id] == 2){return 'yellow';}
+    else if(K_race[d.id] == 3){return 'blue';}
+    else {return 'black';}            
+            
+            
+        })        
+        
+
+    ;
+      svg.selectAll('.kCounter')
+    .transition().delay(1000).duration(2200)
+        .transition().text('Non-race driven')
+        .transition().text('Race driven')
+        .transition().text('Non-race driven')
+        .transition().text('Race driven')
+        .transition().text('Non-race driven')
+        .transition().text('Race driven')
+        .transition().text('Non-race driven')
+        .transition().text('Race driven')
+        .transition().text('Non-race driven')
+        .transition().text('Race driven')
+        .transition().text('Non-race driven')
+        .transition().text('Race driven')
+        .transition().text('Non-race driven')
+        .transition().text('Race driven')
+        .transition().text('Non-race driven')
+        .transition().text('Race driven')
+        .transition().text('Non-race driven')
+        .transition().text('Race driven')
+        .transition().style('opacity',0)
+        .transition().text('Race driven');      
+}
+    
+    
+    
+function changeDate2(){
+    DOMAIN = [8,100]
+    quantize = d3.scale.quantile()
+        .domain(DOMAIN)
+        .range(d3.range(5).map(function (i) {return color_time(i);}));
+    // update polygon color
+    svg.selectAll('path').style('opacity',1).style('fill', function(d){ return quantize(Counts_2003[d.id]);});
+    svg.selectAll('path')
+    .style('opacity',1)
+    .transition().delay(0).duration(timeDuration)
+        .transition().style('fill', function(d) {
+            return quantize(Counts_2004[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Counts_2005[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Counts_2006[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Counts_2007[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Counts_2008[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Counts_2009[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Counts_2010[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Counts_2011[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Counts_2012[d.id]);})
+        .transition().style('opacity',regularOpacity)
+
+    ;
+      svg.selectAll('.yearCounter')
+    .transition().delay(600).duration(timeDuration)
+        .transition().text('2004')
+        .transition().text('2005')
+        .transition().text('2006')
+        .transition().text('2007')
+        .transition().text('2008')
+        .transition().text('2009')
+        .transition().text('2010')
+        .transition().text('2011')
+        .transition().text('2012')
+        .transition().style('opacity',0)
+        .transition().text('2003');
+
+      svg.selectAll('.stopCounter')
+    .transition().delay(600).duration(timeDuration)
+        .transition().text('294K stops')
+        .transition().text('375K stops')
+        .transition().text('579K stops')
+        .transition().text('469K stops')
+        .transition().text('537K stops')
+        .transition().text('579K stops')
+        .transition().text('599K stops')
+        .transition().text('683K stops')
+        .transition().text('531K stops')
+        .transition().style('opacity',0)
+        .transition().text('153K stops');
+    
+    
+    
+      d3.select('legend').selectAll('rect').style('opacity',0);
+    
+
+}
+
+function changeDate(){
+    DOMAIN = [25,100]
+    quantize = d3.scale.quantile()
+        .domain(DOMAIN)
+        .range(d3.range(5).map(function (i) {return color_time(i);}));
+    // update polygon color
+    svg.selectAll('path').style('opacity',1).style('fill',function(d){return quantize(Count_Day_1[d.id]);});
+    svg.selectAll('path')
+    .style('opacity',1)
+    .transition().delay(0).duration(timeDuration)
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_2[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_3[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_4[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_5[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_6[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_7[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_8[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_9[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_10[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_11[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_12[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_13[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_14[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_15[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_16[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_17[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_18[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_19[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_20[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_21[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_22[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_23[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_24[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_25[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_26[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_27[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_28[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_29[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_30[d.id]);})
+        .transition().style('fill', function(d) {
+            return quantize(Count_Day_31[d.id]);})
+        .transition().style('opacity',regularOpacity)
+    
+    ;
+      svg.selectAll('.dayCounter')
+    .transition().delay(600).duration(timeDuration)
+        .transition().text('Day 2')
+        .transition().text('Day 3')
+        .transition().text('Day 4')
+        .transition().text('Day 5')
+        .transition().text('Day 6')
+        .transition().text('Day 7')
+        .transition().text('Day 8')
+        .transition().text('Day 9')
+        .transition().text('Day 10')
+        .transition().text('Day 11')
+        .transition().text('Day 12')
+        .transition().text('Day 13')
+        .transition().text('Day 14')
+        .transition().text('Day 15')
+        .transition().text('Day 16')
+        .transition().text('Day 17')
+        .transition().text('Day 18')
+        .transition().text('Day 19')
+        .transition().text('Day 20')
+        .transition().text('Day 21')
+        .transition().text('Day 22')
+        .transition().text('Day 23')
+        .transition().text('Day 24')
+        .transition().text('Day 25')
+        .transition().text('Day 26')
+        .transition().text('Day 27')
+        .transition().text('Day 28')
+        .transition().text('Day 29')
+        .transition().text('Day 30')
+        .transition().text('Day 31')
+        .transition().style('opacity',0)
+        .transition().text('Day 1')
+    
+    ;
+    
+    svg.selectAll('.stopDayCounter')
+    .transition().delay(600).duration(timeDuration)
+.transition().text('1466 stops').transition().text('1436 stops').transition().text('1382 stops').transition().text('1481 stops').transition().text('1494 stops').transition().text('1378 stops').transition().text('1450 stops').transition().text('1584 stops').transition().text('1489 stops').transition().text('1471 stops').transition().text('1436 stops').transition().text('1461 stops').transition().text('1395 stops').transition().text('1402 stops').transition().text('1494 stops').transition().text('1424 stops').transition().text('1391 stops').transition().text('1517 stops').transition().text('1428 stops').transition().text('1316 stops').transition().text('1323 stops').transition().text('1352 stops').transition().text('1392 stops').transition().text('1312 stops').transition().text('1422 stops').transition().text('1470 stops').transition().text('1279 stops').transition().text('1212 stops').transition().text('1122 stops').transition().text('806 stops')    
+    .transition().style('opacity',0)
+    .transition().text('1347 stops')
+    
+    ;
+}
+
+</script>

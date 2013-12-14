@@ -1,0 +1,7 @@
+load('data/cleanedData.Rdata')
+dfNew = data.frame(df$PCT,df$CS_DESCR,df$AC_INCID,df$SEX,df$RACE,df$AGE,df$WEIGHT,df$HAIRCOLR,df$BUILD,df$HT_FEET,df$HT_INCH,df$ZIP)
+require(RSQLite)
+pct <- sqldf('SELECT PCT, count(*) as count from dfNew group by PCT')
+colnames(dfNew) <- c('PCT','CS_DESCR','AC_INCID','SEX','RACE','AGE','WEIGHT','HAIRCOLR','BUILD','HT_FEET','HT_INCH','ZIP')
+pct <- sqldf('SELECT RACE,PCT, count(*) as count from dfNew group by RACE,PCT')
+zips <- sqldf('SELECT ZIP,count(*)from dfNew group by ZIP')

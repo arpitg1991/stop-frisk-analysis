@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font: 10px sans-serif;
+  background-color:black;
+}
+    
+path {
+        stroke: black;
+        stroke-width: 0.001px;
+    }
+    
+.form {  position: fixed;
+  padding: 10px;
+  font-size: large;
+  width:20px;
+    }
+    
+    #mainvariable {
+        top:10px;
+        right:10px;
+        width:50px;
+        height:20px;
+    }
+    #barvariables { 
+        top: 10px;
+        left: 10px;
+        width: 10px;
+        height: 20px;
+    }         
+    
+    
+div.tooltip {   
+  position: absolute;           
+  text-align: center;           
+  width: 140px;                  
+  height: 30px;                 
+  padding: 10px;             
+  font-size: 12px;     
+  background-color: rgba(28, 28, 28, 0.6);
+  border: 1.5px;    
+  vertical-align: middle;
+  border-radius: 20px;           
+  pointer-events: none; 
+  color : white;
+  white-space : pre;
+}     
+    
+div.textbox {
+  position: fixed;   
+  top: 80px;
+  left: 15px;
+  text-align: left;           
+  width: 320px;                  
+  height: 150px;                 
+  padding: 10px;             
+  font-size: 12px;     
+  background-color: rgba(96, 96, 96, 0.6);
+  border: 1.5px;    
+  vertical-align: middle;
+  border-radius: 20px;           
+  pointer-events: none; 
+  color : white;
+  white-space : pre;
+}   
+    
+div.datatextbox {
+  position: fixed;   
+  top: 260px;
+  left: 15px;
+  text-align: left;           
+  width: 320px;                  
+  height: 250px;                 
+  padding: 10px;             
+  font-size: 12px;     
+  background-color: rgba(96, 96, 96, 0.6);
+  border: 1.5px;    
+  vertical-align: middle;
+  border-radius: 20px;           
+  pointer-events: none; 
+  color : white;
+  white-space : pre;
+}     
+
+    
+.legend {
+  font-size: 12px;
+}
+
+li.key {
+    border-top-width: 15px;
+    border-top-style: solid;
+    font-size: .75em;
+    width: 10%;
+    padding-left: 0;
+    padding-right: 0;
+        color: white;
+}
+    
+</style>
+<body>
+    <font color = 'white'>
+<form id = '#mainvariable'>
+Choose chloropleth:<select id="polyVars"></select><br><br>Choose subvariables:
+</form>
+<form id = '#barvariables'>
+<select id="barVar1" style="width:8%;max-width:80%;"></select>
+<select id="barVar2" style="width:8%;max-width:80%;"></select>
+<select id="barVar3" style="width:8%;max-width:80%;"></select>
+</form>
+        </font>
+<!--  <button id = "cycle" class = 'button'>Loop Var</button> -->
+
+    
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script type="text/javascript" src="http://d3js.org/topojson.v0.min.js"></script>
+
+<script>
+    var screenwidth = 1280,
+        screenheight = 768;       
+
+    var regularOpacity = 0.6
+            
+    var margin = {top: 0, right: 0, bottom: 0, left: 0},
+        width = screenwidth - margin.left - margin.right,
+        height = screenheight - margin.top - margin.bottom,
+        centered = null;
+    
+    var svg = d3.select("body").append("svg")
+        .attr("width", screenwidth + margin.left + margin.right)
+        .attr("height", screenheight + margin.top + margin.bottom)        
+    
+    var tooltip = d3.select("body").append("div")   
+        .attr("class", "tooltip")               
+        .style("opacity", 0);
+    
+    var textbox = d3.select('body').append('div')
+        .attr('class', 'textbox')
+        .style('opacity', 0);
+
+    var datatextbox = d3.select('body').append('div')
+            .attr('class', 'datatextbox')
+            .style('opacity', 0);    
+    
+    var projection = d3.geo.mercator()
+        .center([-73.94, 40.70])
+        .scale(70000)
+        .translate([(screenwidth) / 2 + 250, (screenheight)/2 - 50]);
+    
+    var path = d3.geo.path().projection(projection);    
+    
+    var g = svg.append('g');
+
+    var color = d3.scale.pow().exponent(0.5)
+        .domain([0,5])
+        .range(['pink','red'])
+        .interpolate(d3.interpolateLab);
+
+    var quantize;
+    
+    var variable,
+        barVariable1,
+        barVariable2,
+        barVariable3;
+
+    var legend_labels;
+
+    var legend = svg.selectAll("g.legend")
+      .data([1,2,3,4,5])
+      .enter().append("g")
+      .attr("class", "legend");
+
+    var ls_w = 20, ls_h = 20;
+
+    var bar_width = 100;
+    var bar_height = 100;
+    var legendHeight = 600;
+    
+function initializeMap(variable) {
+    DOMAIN = d3.extent(variable)
+    quantize = d3.scale.quantile()
+        .domain(DOMAIN)
+        .range(d3.range(5).map(function (i) { return color(i);}));
+                    
+        g.selectAll("path").data(topojson.object(nyp, nyp.objects.nypp).geometries)
+        .enter().append("path").attr('d', path)
+    
+    //Color polygons
+        .style('fill', function(d) {
+            return quantize(variable[d.id]);}).style('opacity', regularOpacity)
+
+    //Adding mouseevents
+        .on("mouseover", function(d) {
+            d3.select(this).transition().duration(150).style("opacity", 1);
+            tooltip.transition().duration(150)
+            .style("opacity", 1)
+            tooltip.html("Precinct " + nameById[d.id] + "<br>" +
+                     variable[d.id] + " crimes ")
+            .style("left", (d3.event.pageX) + "px")
+            .style("top", (d3.event.pageY -50) + "px");})
+        .on("mouseout", function() {
+            d3.select(this)
+            .transition().duration(150)
+            .style("opacity", regularOpacity);
+            tooltip.transition().duration(150)
+            .style("opacity", 0);})            
+        .on('click', clicked)
+
+    //Draw legend        
+        legend.append("rect")
+            .attr("x", 20)
+            .attr("y", function(d, i){ return legendHeight - (i*ls_h) - 2*ls_h;})
+            .attr("width", ls_w)
+            .attr("height", ls_h)
+            .style("fill", function(d, i) { return color(d-1); })
+            .style("opacity", 1);
+
+        legend.append("text")
+            .attr("x", 50)
+            .attr("y", function(d, i){ return legendHeight - (i*ls_h) - ls_h - 4;})
+            .attr('fill', 'white')
+            .attr('class',function(i){return 'leg' + i;});
+        
+  legend_labels = quantize.quantiles();
+    
+    d3.select('.leg1').text('0 - ' + d3.round(legend_labels[0]))
+    
+    d3.select('.leg2').text(d3.round(legend_labels[0]) + ' - ' + d3.round(legend_labels[1]))
+    
+    d3.select('.leg3').text(d3.round(legend_labels[1]) + ' - ' + d3.round(legend_labels[2]))
+    
+    d3.select('.leg4').text(d3.round(legend_labels[2]) + ' - ' + d3.round(legend_labels[3]))
+
+    d3.select('.leg5').text(d3.round(legend_labels[3]) + ' - ' + d3.round(DOMAIN[1]))
+
+    
+textbox.append('svg').attr('class','svg1').attr('width', bar_width).attr('height', bar_height+20)
+    .append('rect').attr('class','bar1').attr('x', 10, 'y', 20 ).attr('width', bar_width).attr('height', bar_height).style('fill', 'green');
+
+textbox.append('svg').attr('class','svg2').attr('width', bar_width).attr('height', bar_height+20)
+    .append('rect').attr('class','bar2').attr('x', 10, 'y', 20).attr('width', bar_width).attr('height', bar_height).style('fill', 'blue');
+
+textbox.append('svg').attr('class','svg3').attr('width', bar_width).attr('height', bar_height+20)
+    .append('rect').attr('class','bar3').attr('x', 10, 'y', 20).attr('width', bar_width).attr('height', bar_height).style('fill', 'red');
+
+        
+textbox.selectAll('.svg1').append('text').attr('x',55).attr('y',bar_height+15).attr('text-anchor', 'middle').text('Black').attr('fill','white')
+
+textbox.selectAll('.svg2').append('text').attr('x',55).attr('y',bar_height+15).attr('text-anchor', 'middle').text('White').attr('fill','white')
+
+textbox.selectAll('.svg3').append('text').attr('x',55).attr('y',bar_height+15).attr('text-anchor', 'middle').text('Hispanic').attr('fill','white')
+
+barVariable1 = crimes1ById;
+barVariable2 = crimes2ById;
+barVariable3 = crimes3ById;
+
+    }
+
+        
+        function ready(error, Map, Data){
+            // Store data from csv into arrays, whose indices match the map ids
+            Data.forEach(function(d) {    
+                nameById[d.Precinct] = +d.Precinct;
+                totalCrimesById[d.Precinct] = +d.totCrime_2012;
+                crimes1ById[d.Precinct] = +d.G1;
+                crimes2ById[d.Precinct] = +d.G2;
+                crimes3ById[d.Precinct] = +d.G3;
+//                g1BurglaryById[d.Precinct] = +d.G1_Burglary;
+//                g1GlaById[d.Precinct] = +d.G1_GLA;
+//                g1GlById[d.Precinct] = +d.G1_GL;
+//                g1RobberyById[d.Precinct] = +d.G1_Robbery;
+//                g2FelonyAssaultById[d.Precinct] = +d.G2;
+//                g3MurderById[d.Precinct] = +d.G3_Murder;
+//                g3RapeById[d.Precinct] = +d.G3_Rape;                
+
+                ratioBlackById[d.Precinct] = +d.black_ratio;
+                ratioWhiteById[d.Precinct] = +d.white_ratio;
+                ratioHispById[d.Precinct] = +d.hispanic_ratio;
+                
+                stopWhiteById[d.Precinct] = +d.Percent_White;
+                stopBlackById[d.Precinct] = +d.Percent_Black;
+                stopHispById[d.Precinct] = +d.Percent_Hispanic;
+                
+                popWhiteById[d.Precinct] = +d.ACS_Percent_White;
+                popBlackById[d.Precinct] = +d.ACS_Percent_Black;
+                popHispById[d.Precinct] = +d.ACS_Percent_Hispanic;
+                
+                numFrisksById[d.Precinct] = +d.Count_Frisks;
+                
+                seasById[d.Precinct] = +d.seasonality;
+                
+
+                
+            });
+
+            nyp = Map;
+
+            // Generate the map
+            initializeMap(totalCrimesById);            
+        }
+        
+        // initialize data
+        var nameById = [];    
+        var totalCrimesById = [];
+        var crimes1ById = [];
+        var crimes2ById = [];
+        var crimes3ById = [];
+        var seasById = [];
+        var numFrisksById = [];
+        var popWhiteById = [];
+        var popBlackById = [];
+        var popHispById = [];
+        var stopWhiteById = [];
+        var stopBlackById = [];
+        var stopHispById = [];
+        var ratioBlackById = [];
+        var ratioWhiteById = [];
+        var ratioHispById = [];
+    
+        var DOMAIN;            
+        queue()
+        
+            .defer(d3.json,"https://dl.dropboxusercontent.com/u/60227913/nycCrimeFrisk/nypp.json")
+            .defer(d3.csv,'https://dl.dropboxusercontent.com/u/60227913/nycCrimeFrisk/SFCombinedData.csv')
+            .await(ready);
+
+        
+// Update map via dropdown            
+d3.select("#polyVars")
+    .on("change", change)
+    .selectAll("option")
+    // add options HERE
+    .data(["All crimes",
+        "...Grade 1 crimes",
+        "...Grade 2 crimes",
+        "...Grade 3 crimes",
+        "Number of stops",
+        "...% White",
+        "...% Black",
+        "...% Hispanic",
+        "Number of residents",
+        "...% who are White",
+        "...% who are Black",
+        "...% who are Hispanic",
+        "Stop-to-Pop ratio",
+        "...among Whites",
+        "...among Blacks",
+        "...among Hispanics",
+        "Seasonality index"
+          ])
+
+    .enter().append("option")
+    .attr("value", function(d) { return d; })
+    .text(function(d) { return d; });
+            
+// Update map via dropdown            
+d3.select("#barVar1")
+    .on("change", changeBar1)
+    .selectAll("option")
+    // add options HERE
+    .data(["All crimes",
+        "...Grade 1 crimes",
+        "...Grade 2 crimes",
+        "...Grade 3 crimes",
+        "Number of stops",
+        "...% White",
+        "...% Black",
+        "...% Hispanic",
+        "Number of residents",
+        "...% who are White",
+        "...% who are Black",
+        "...% who are Hispanic",
+        "Stop-to-Pop ratio",
+        "...among Whites",
+        "...among Blacks",
+        "...among Hispanics",
+        "Seasonality index"
+          ])
+    .enter().append("option")
+    .attr("value", function(d) { return d; })
+    .text(function(d) { return d; });
+    
+d3.select("#barVar2")
+    .on("change", changeBar2)
+    .selectAll("option")
+    // add options HERE
+    .data(["All crimes",
+        "...Grade 1 crimes",
+        "...Grade 2 crimes",
+        "...Grade 3 crimes",
+        "Number of stops",
+        "...% White",
+        "...% Black",
+        "...% Hispanic",
+        "Number of residents",
+        "...% who are White",
+        "...% who are Black",
+        "...% who are Hispanic",
+        "Stop-to-Pop ratio",
+        "...among Whites",
+        "...among Blacks",
+        "...among Hispanics",
+        "Seasonality index"
+          ])
+    .enter().append("option")
+    .attr("value", function(d) { return d; })
+    .text(function(d) { return d; });
+    
+d3.select("#barVar3")
+    .on("change", changeBar3)
+    .selectAll("option")
+    // add options HERE
+    .data(["All crimes",
+        "...Grade 1 crimes",
+        "...Grade 2 crimes",
+        "...Grade 3 crimes",
+        "Number of stops",
+        "...% White",
+        "...% Black",
+        "...% Hispanic",
+        "Number of residents",
+        "...% who are White",
+        "...% who are Black",
+        "...% who are Hispanic",
+        "Stop-to-Pop ratio",
+        "...among Whites",
+        "...among Blacks",
+        "...among Hispanics",
+        "Seasonality index"
+          ])
+
+    .enter().append("option")
+    .attr("value", function(d) { return d; })
+    .text(function(d) { return d; });
+
+function change() {
+    
+    temp = this.value      
+    // add variables HERE
+      if(temp == "Grade 1 crimes") {variable = crimes1ById}
+      else if(temp == "Grade 2 crimes") {variable = crimes2ById}
+      else if(temp == "Grade 3 crimes") {variable = crimes3ById}
+      else if(temp == "All crimes") {variable = totalCrimesById}
+      else if(temp == "Number of stops") {variable = numFrisksById}
+      else if(temp == "...% White") {variable = stopWhiteById}
+      else if(temp == "...% Black") {variable = stopBlackById}
+      else if(temp == "...% Hispanic") {variable = stopHispById}
+      else if(temp == "...% who are White") {variable = popWhiteById}
+      else if(temp == "...% who are Black") {variable = popBlackById}
+      else if(temp == "...% who are Hispanic") {variable = popHispById}
+                        
+      else if(temp == "Stop-to-Pop ratio") {variable = numFrisksById} // for now
+      else if(temp == "...among Whites") {variable = ratioWhiteById}
+      else if(temp == "...among Blacks") {variable = ratioBlackById}
+      else if(temp == "...among Hispanics") {variable = ratioHispById}
+      else if(temp == "Seasonality index") {variable = seasById}
+    
+    DOMAIN = d3.extent(variable)
+    quantize = d3.scale.quantile()
+        .domain(DOMAIN)
+        .range(d3.range(5).map(function (i) {return color(i);}));
+    // update polygon color
+    svg.selectAll('path').style('fill', function(d) {
+        return quantize(variable[d.id]);})
+        .style('opacity', regularOpacity)
+    // update tooltip
+    .on("mouseover", function(d) {
+        d3.select(this).transition().duration(150).style("opacity", 1);
+        tooltip.transition().duration(150)
+        .style("opacity", 1)
+        tooltip.html("Precinct " + nameById[d.id] + "<br>" +
+                 + d3.round(variable[d.id]))
+        .style("left", (d3.event.pageX) + "px")
+        .style("top", (d3.event.pageY -30) + "px");})
+    
+    legend_labels = quantize.quantiles();
+    
+    d3.select('.leg1').text(d3.round(DOMAIN[0]) + ' - ' + d3.round(legend_labels[0]))
+    
+    d3.select('.leg2').text(d3.round(legend_labels[0]) + ' - ' + d3.round(legend_labels[1]))
+    
+    d3.select('.leg3').text(d3.round(legend_labels[1]) + ' - ' + d3.round(legend_labels[2]))
+    
+    d3.select('.leg4').text(d3.round(legend_labels[2]) + ' - ' + d3.round(legend_labels[3]))
+
+    d3.select('.leg5').text(d3.round(legend_labels[3]) + ' - ' + d3.round(DOMAIN[1]))
+
+}
+ 
+            
+function changeBar1() {
+    temp = this.value      
+    // add variables HERE
+      if(temp == "Grade 1 crimes") {barVariable1 = crimes1ById}
+      else if(temp == "Grade 2 crimes") {barVariable1 = crimes2ById}
+      else if(temp == "Grade 3 crimes") {barVariable1 = crimes3ById}
+      else if(temp == "All crimes") {barVariable1 = totalCrimesById}
+      else if(temp == "Number of stops") {barVariable1 = numFrisksById}
+      else if(temp == "...% White") {barVariable1 = stopWhiteById}
+      else if(temp == "...% Black") {barVariable1 = stopBlackById}
+      else if(temp == "...% Hispanic") {barVariable1 = stopHispById}
+      else if(temp == "...% who are White") {barVariable1 = popWhiteById}
+      else if(temp == "...% who are Black") {barVariable1 = popBlackById}
+      else if(temp == "...% who are Hispanic") {barVariable1 = popHispById}
+                        
+      else if(temp == "Stop-to-Pop ratio") {barVariable1 = numFrisksById} // for now
+      else if(temp == "...among Whites") {barVariable1 = ratioWhiteById}
+      else if(temp == "...among Blacks") {barVariable1 = ratioBlackById}
+      else if(temp == "...among Hispanics") {barVariable1 = ratioHispById}
+      else if(temp == "Seasonality index") {barVariable1 = seasById}
+
+    textbox.selectAll('.bar1').transition().duration(150).attr('height',function(d){return  barVariable1[d.id];}).attr('y',function(d){return bar_height - barVariable1[d.id];});
+        textbox.selectAll('.svg1').select('text').text(function(d){return d3.round(barVariable1[d.id]);});
+
+        
+
+}
+
+    
+function changeBar2() {
+    temp = this.value      
+    // add variables HERE
+      if(temp == "Grade 1 crimes") {barVariable2 = crimes1ById}
+      else if(temp == "Grade 2 crimes") {barVariable2 = crimes2ById}
+      else if(temp == "Grade 3 crimes") {barVariable2 = crimes3ById}
+      else if(temp == "All crimes") {barVariable2 = totalCrimesById}
+      else if(temp == "Number of stops") {barVariable2 = numFrisksById}
+      else if(temp == "...% White") {barVariable2 = stopWhiteById}
+      else if(temp == "...% Black") {barVariable2 = stopBlackById}
+      else if(temp == "...% Hispanic") {barVariable2 = stopHispById}
+      else if(temp == "...% who are White") {barVariable2 = popWhiteById}
+      else if(temp == "...% who are Black") {barVariable2 = popBlackById}
+      else if(temp == "...% who are Hispanic") {barVariable2 = popHispById}
+                        
+      else if(temp == "Stop-to-Pop ratio") {barVariable2 = numFrisksById} // for now
+      else if(temp == "...among Whites") {barVariable2 = ratioWhiteById}
+      else if(temp == "...among Blacks") {barVariable2 = ratioBlackById}
+      else if(temp == "...among Hispanics") {barVariable2 = ratioHispById}
+      else if(temp == "Seasonality index") {barVariable2 = seasById}
+
+        
+    
+    textbox.selectAll('.svg2').select('text').text(d3.round(barVariable2[d.id]));
+        textbox.selectAll('.bar2').attr('height', barVariable2[d.id]).attr('y',bar_height - barVariable2[d.id]);
+
+
+
+}
+    
+function changeBar3() {
+    temp = this.value      
+    // add variables HERE
+      if(temp == "Grade 1 crimes") {barVariable3 = crimes1ById}
+      else if(temp == "Grade 2 crimes") {barVariable3 = crimes2ById}
+      else if(temp == "Grade 3 crimes") {barVariable3 = crimes3ById}
+      else if(temp == "All crimes") {barVariable3 = totalCrimesById}
+      else if(temp == "Number of stops") {barVariable3 = numFrisksById}
+      else if(temp == "...% White") {barVariable3 = stopWhiteById}
+      else if(temp == "...% Black") {barVariable3 = stopBlackById}
+      else if(temp == "...% Hispanic") {barVariable3 = stopHispById}
+      else if(temp == "...% who are White") {barVariable3 = popWhiteById}
+      else if(temp == "...% who are Black") {barVariable3 = popBlackById}
+      else if(temp == "...% who are Hispanic") {barVariable3 = popHispById}
+                        
+      else if(temp == "Stop-to-Pop ratio") {barVariable3 = numFrisksById} // for now
+      else if(temp == "...among Whites") {barVariable3 = ratioWhiteById}
+      else if(temp == "...among Blacks") {barVariable3 = ratioBlackById}
+      else if(temp == "...among Hispanics") {barVariable3 = ratioHispById}
+      else if(temp == "Seasonality index") {barVariable3 = seasById}
+
+    textbox.selectAll('.svg3').select('text').text(d3.round(barVariable3[d.id]));
+        textbox.selectAll('.bar3').attr('height', barVariable3[d.id]).attr('y',bar_height - barVariable3[d.id]);
+
+
+}
+    
+// ZOOM AND PAN
+function clicked(d){
+    var x,y,k;
+    
+    if (d && centered !== d ) {
+        var centroid = path.centroid(d);
+        x = centroid[0]
+        y = centroid[1];
+        k = 2;
+        centered = d;
+    }
+    else {
+        x = width / 2;
+        y = height / 2;
+        k = 1;
+        centered = null;
+    }
+    
+    g.selectAll('path')
+        .classed('active', centered && function(d) { return d === centered; } ) ;
+    
+    g.transition()
+        .duration(350)
+        .attr('transform', 'translate(' + width / 2 + ',' + height/2 + ')scale(' + k + ')translate(' + -x + ',' + -y + ')')
+        .style('stroke-width', 1.5/k + 'px');
+
+    // When we focus, let's remove the tool tip, but supplement with a data table at the corner
+
+    if (! d || centered === d){
+        d3.select(this)
+            .transition().duration(350)
+            .style("opacity", 1);
+        d3.select(this).transition().duration(350).style("opacity", 1);
+            textbox.transition().duration(350)
+            .style("opacity", 1);
+        textbox.selectAll('.bar1').style('fill','white');
+        textbox.selectAll('.bar2').style('fill','black');
+        textbox.selectAll('.bar3').style('fill','grey');
+        
+        
+         d3.select(this).transition().duration(350).style("opacity", 1);
+        datatextbox.transition().duration(350)
+        .style("opacity", 1)
+        datatextbox.html("Precinct " + nameById[d.id] + "<br>" +
+                 "<br>" + 
+                 "Total Crimes: " + totalCrimesById[d.id] + "<br>" +
+                 "   % Violent: " + crimes1ById[d.id] + "<br>" +
+                 "<br>" +
+                 "Number of stops: " +  "<br>" +
+                 "   % Successful: " +  "<br>" +
+                 "   % Involving physical force: " +  "<br>" +
+                 "<br>" +
+                 "Number of frisks: " + "<br>" +
+                 "   % White: " + "<br>" + 
+                 "   % Black: " + "<br>" +
+                 "   % Hispanic: " + "<br>" +
+                 "<br>" +
+                 "Black-based segment: " + "blah" + "<br>" +
+                 "Hispanic-based segment: " + "blah" + "<br>" +
+                 "Econ-based segment: " + "blah" + "<br>"
+                
+                )
+        
+        
+        
+        
+        textbox.selectAll('.bar1').attr('height', barVariable1[d.id]).attr('y',bar_height - barVariable1[d.id]);
+        textbox.selectAll('.bar2').attr('height', barVariable2[d.id]).attr('y',bar_height - barVariable2[d.id]);
+        textbox.selectAll('.bar3').attr('height', barVariable3[d.id]).attr('y',bar_height - barVariable3[d.id]);
+        
+        textbox.selectAll('.svg1').select('text').text(d3.round(barVariable1[d.id]));
+        textbox.selectAll('.svg2').select('text').text(d3.round(barVariable2[d.id]));
+        textbox.selectAll('.svg3').select('text').text(d3.round(barVariable3[d.id]));
+        
+        
+        
+    }
+    
+    else { // return to normal
+    d3.select(this)
+        .transition().duration(350)
+        .style("opacity", '1');
+
+    textbox.transition().duration(350)
+    .style("opacity", 0)
+    
+    datatextbox.transition().duration(350)
+    .style("opacity", 0)
+    
+    }
+    
+}       
+
+</script>
